@@ -1,0 +1,451 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Problem Solver Game - API Gateway Configuration'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+  
+  CorsOrigin:
+    Type: String
+    Default: '*'
+    Description: CORS allowed origin
+
+Resources:
+  # API Gateway REST API
+  GameAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub 'aws-problem-solver-game-api-${Environment}'
+      Description: 'AWS Problem Solver Game REST API'
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Policy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: 'execute-api:Invoke'
+            Resource: '*'
+
+  # Lambda Execution Role for API Gateway
+  ApiGatewayLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'GameAPI-Lambda-Role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/aws-game-*'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/aws-game-*/index/*'
+
+  # Lambda Functions
+  QuestionManagerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'game-question-manager-${Environment}'
+      Runtime: python3.9
+      Handler: question_manager.lambda_handler
+      Role: !GetAtt ApiGatewayLambdaRole.Arn
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': '{"message": "Question Manager placeholder"}'
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          QUESTIONS_TABLE: !Sub 'aws-game-questions-${Environment}'
+          USERS_TABLE: !Sub 'aws-game-users-${Environment}'
+      Timeout: 30
+
+  ScoreCalculatorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'game-score-calculator-${Environment}'
+      Runtime: python3.9
+      Handler: score_calculator.lambda_handler
+      Role: !GetAtt ApiGatewayLambdaRole.Arn
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': '{"message": "Score Calculator placeholder"}'
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          USERS_TABLE: !Sub 'aws-game-users-${Environment}'
+          SESSIONS_TABLE: !Sub 'aws-game-sessions-${Environment}'
+          QUESTIONS_TABLE: !Sub 'aws-game-questions-${Environment}'
+          LEADERBOARD_TABLE: !Sub 'aws-game-leaderboard-${Environment}'
+      Timeout: 30
+
+  HintProviderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'game-hint-provider-${Environment}'
+      Runtime: python3.9
+      Handler: hint_provider.lambda_handler
+      Role: !GetAtt ApiGatewayLambdaRole.Arn
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': '{"message": "Hint Provider placeholder"}'
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          QUESTIONS_TABLE: !Sub 'aws-game-questions-${Environment}'
+          USERS_TABLE: !Sub 'aws-game-users-${Environment}'
+      Timeout: 30
+
+  LeaderboardFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'game-leaderboard-${Environment}'
+      Runtime: python3.9
+      Handler: leaderboard.lambda_handler
+      Role: !GetAtt ApiGatewayLambdaRole.Arn
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': '{"message": "Leaderboard placeholder"}'
+              }
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          LEADERBOARD_TABLE: !Sub 'aws-game-leaderboard-${Environment}'
+          USERS_TABLE: !Sub 'aws-game-users-${Environment}'
+      Timeout: 30
+
+  # API Gateway Resources and Methods
+
+  # /questions resource
+  QuestionsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GameAPI
+      ParentId: !GetAtt GameAPI.RootResourceId
+      PathPart: questions
+
+  # /questions/random
+  QuestionsRandomResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GameAPI
+      ParentId: !Ref QuestionsResource
+      PathPart: random
+
+  QuestionsRandomMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref QuestionsRandomResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${QuestionManagerFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseHeaders:
+            Access-Control-Allow-Origin: true
+
+  # /questions/adaptive
+  QuestionsAdaptiveResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GameAPI
+      ParentId: !Ref QuestionsResource
+      PathPart: adaptive
+
+  QuestionsAdaptiveMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref QuestionsAdaptiveResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${QuestionManagerFunction.Arn}/invocations'
+
+  # /questions/npc
+  QuestionsNpcResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GameAPI
+      ParentId: !Ref QuestionsResource
+      PathPart: npc
+
+  QuestionsNpcMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref QuestionsNpcResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${QuestionManagerFunction.Arn}/invocations'
+
+  # /questions/scenario
+  QuestionsScenarioResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GameAPI
+      ParentId: !Ref QuestionsResource
+      PathPart: scenario
+
+  QuestionsScenarioMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref QuestionsScenarioResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${QuestionManagerFunction.Arn}/invocations'
+
+  # /answer resource
+  AnswerResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GameAPI
+      ParentId: !GetAtt GameAPI.RootResourceId
+      PathPart: answer
+
+  AnswerMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref AnswerResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ScoreCalculatorFunction.Arn}/invocations'
+
+  # /hints resource
+  HintsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GameAPI
+      ParentId: !GetAtt GameAPI.RootResourceId
+      PathPart: hints
+
+  HintsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref HintsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HintProviderFunction.Arn}/invocations'
+
+  # /leaderboard resource
+  LeaderboardResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GameAPI
+      ParentId: !GetAtt GameAPI.RootResourceId
+      PathPart: leaderboard
+
+  LeaderboardGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref LeaderboardResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LeaderboardFunction.Arn}/invocations'
+
+  LeaderboardPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref LeaderboardResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LeaderboardFunction.Arn}/invocations'
+
+  # CORS Options Methods
+  QuestionsOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GameAPI
+      ResourceId: !Ref QuestionsResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: !Sub "'${CorsOrigin}'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # Lambda Permissions
+  QuestionManagerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref QuestionManagerFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GameAPI}/*/*'
+
+  ScoreCalculatorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ScoreCalculatorFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GameAPI}/*/*'
+
+  HintProviderPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref HintProviderFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GameAPI}/*/*'
+
+  LeaderboardPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LeaderboardFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GameAPI}/*/*'
+
+  # API Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - QuestionsRandomMethod
+      - QuestionsAdaptiveMethod
+      - QuestionsNpcMethod
+      - QuestionsScenarioMethod
+      - AnswerMethod
+      - HintsMethod
+      - LeaderboardGetMethod
+      - LeaderboardPostMethod
+    Properties:
+      RestApiId: !Ref GameAPI
+      Description: !Sub 'Deployment for ${Environment} environment'
+
+  # API Stage
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref GameAPI
+      DeploymentId: !Ref ApiDeployment
+      StageName: !Ref Environment
+      Description: !Sub '${Environment} stage for AWS Problem Solver Game API'
+      Variables:
+        environment: !Ref Environment
+      MethodSettings:
+        - ResourcePath: '/*/*'
+          HttpMethod: '*'
+          LoggingLevel: INFO
+          DataTraceEnabled: true
+          MetricsEnabled: true
+
+  # CloudWatch Log Group for API Gateway
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/apigateway/aws-problem-solver-game-${Environment}'
+      RetentionInDays: 14
+
+Outputs:
+  ApiGatewayUrl:
+    Description: 'API Gateway endpoint URL'
+    Value: !Sub 'https://${GameAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+
+  ApiGatewayId:
+    Description: 'API Gateway ID'
+    Value: !Ref GameAPI
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiId'
+
+  QuestionManagerFunctionArn:
+    Description: 'Question Manager Lambda Function ARN'
+    Value: !GetAtt QuestionManagerFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-QuestionManagerArn'
+
+  ScoreCalculatorFunctionArn:
+    Description: 'Score Calculator Lambda Function ARN'
+    Value: !GetAtt ScoreCalculatorFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ScoreCalculatorArn'
+
+  HintProviderFunctionArn:
+    Description: 'Hint Provider Lambda Function ARN'
+    Value: !GetAtt HintProviderFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-HintProviderArn'
+
+  LeaderboardFunctionArn:
+    Description: 'Leaderboard Lambda Function ARN'
+    Value: !GetAtt LeaderboardFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LeaderboardArn'
