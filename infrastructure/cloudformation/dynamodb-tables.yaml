@@ -1,0 +1,153 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Problem Solver Game - DynamoDB Tables'
+
+Resources:
+  # 사용자 정보 테이블
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: aws-game-users
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: email-index
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: Project
+          Value: AWS-Problem-Solver-Game
+        - Key: Environment
+          Value: Development
+
+  # 문제 은행 테이블
+  QuestionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: aws-game-questions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: questionId
+          AttributeType: S
+        - AttributeName: category
+          AttributeType: S
+        - AttributeName: difficulty
+          AttributeType: S
+      KeySchema:
+        - AttributeName: questionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: category-difficulty-index
+          KeySchema:
+            - AttributeName: category
+              KeyType: HASH
+            - AttributeName: difficulty
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Project
+          Value: AWS-Problem-Solver-Game
+        - Key: Environment
+          Value: Development
+
+  # 게임 세션 테이블
+  GameSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: aws-game-sessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: sessionId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sessionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: userId-createdAt-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      Tags:
+        - Key: Project
+          Value: AWS-Problem-Solver-Game
+        - Key: Environment
+          Value: Development
+
+  # 리더보드 테이블
+  LeaderboardTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: aws-game-leaderboard
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: leaderboardType
+          AttributeType: S
+        - AttributeName: score
+          AttributeType: N
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: leaderboardType
+          KeyType: HASH
+        - AttributeName: score
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: userId-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Project
+          Value: AWS-Problem-Solver-Game
+        - Key: Environment
+          Value: Development
+
+Outputs:
+  UsersTableName:
+    Description: 'Users table name'
+    Value: !Ref UsersTable
+    Export:
+      Name: !Sub '${AWS::StackName}-UsersTable'
+
+  QuestionsTableName:
+    Description: 'Questions table name'
+    Value: !Ref QuestionsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-QuestionsTable'
+
+  GameSessionsTableName:
+    Description: 'Game sessions table name'
+    Value: !Ref GameSessionsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-GameSessionsTable'
+
+  LeaderboardTableName:
+    Description: 'Leaderboard table name'
+    Value: !Ref LeaderboardTable
+    Export:
+      Name: !Sub '${AWS::StackName}-LeaderboardTable'
