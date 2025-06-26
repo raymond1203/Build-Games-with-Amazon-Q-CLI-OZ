@@ -1,0 +1,234 @@
+{
+  "questions": [
+    {
+      "questionId": "s3_001",
+      "category": "S3",
+      "difficulty": "easy",
+      "npcCharacter": "jenny_developer",
+      "scenario": {
+        "title": "웹사이트 정적 파일 호스팅",
+        "description": "개발자 Jenny가 React로 만든 정적 웹사이트를 호스팅하려고 합니다.",
+        "context": "HTML, CSS, JavaScript 파일들로 구성된 단순한 정적 웹사이트이며, 별도의 서버 로직은 없습니다. 비용을 최소화하면서 빠른 로딩 속도를 원합니다."
+      },
+      "question": "정적 웹사이트 호스팅에 가장 적합한 AWS 솔루션은?",
+      "options": [
+        {
+          "id": "A",
+          "text": "EC2 인스턴스에 Apache 웹서버 설치",
+          "isCorrect": false
+        },
+        {
+          "id": "B",
+          "text": "S3 Static Website Hosting + CloudFront",
+          "isCorrect": true
+        },
+        {
+          "id": "C",
+          "text": "Lambda + API Gateway",
+          "isCorrect": false
+        },
+        {
+          "id": "D",
+          "text": "ECS 컨테이너로 Nginx 실행",
+          "isCorrect": false
+        }
+      ],
+      "explanation": "정적 웹사이트는 S3 Static Website Hosting이 가장 비용 효율적입니다. CloudFront CDN과 함께 사용하면 전 세계 어디서나 빠른 로딩 속도를 제공할 수 있습니다.",
+      "hints": [
+        "정적 파일만 있다면 서버가 필요하지 않습니다.",
+        "S3에는 웹사이트 호스팅 전용 기능이 있습니다.",
+        "CDN을 함께 사용하면 성능을 더욱 향상시킬 수 있습니다."
+      ],
+      "tags": ["static-hosting", "cloudfront", "cost-optimization"],
+      "estimatedTime": 45,
+      "points": 80,
+      "createdAt": "2025-06-26T10:00:00Z",
+      "updatedAt": "2025-06-26T10:00:00Z",
+      "isActive": true
+    },
+    {
+      "questionId": "s3_002",
+      "category": "S3",
+      "difficulty": "easy",
+      "npcCharacter": "alex_ceo",
+      "scenario": {
+        "title": "파일 백업 전략",
+        "description": "Alex의 회사에서 중요한 비즈니스 문서들을 안전하게 백업하고 싶어합니다.",
+        "context": "현재 로컬 서버에 저장된 문서들이 있으며, 이 파일들은 자주 접근하지는 않지만 법적 요구사항으로 7년간 보관해야 합니다. 비용을 최소화하면서도 안전하게 보관하고 싶습니다."
+      },
+      "question": "장기 보관용 백업에 가장 적합한 S3 스토리지 클래스는?",
+      "options": [
+        {
+          "id": "A",
+          "text": "S3 Standard",
+          "isCorrect": false
+        },
+        {
+          "id": "B",
+          "text": "S3 Standard-IA",
+          "isCorrect": false
+        },
+        {
+          "id": "C",
+          "text": "S3 Glacier Deep Archive",
+          "isCorrect": true
+        },
+        {
+          "id": "D",
+          "text": "S3 One Zone-IA",
+          "isCorrect": false
+        }
+      ],
+      "explanation": "자주 접근하지 않는 장기 보관용 데이터에는 S3 Glacier Deep Archive가 가장 비용 효율적입니다. 최저 비용으로 데이터를 안전하게 보관할 수 있으며, 복구 시간이 12시간 정도 소요됩니다.",
+      "hints": [
+        "자주 접근하지 않는 데이터에는 특별한 스토리지 클래스가 있습니다.",
+        "장기 보관에 특화된 아카이브 서비스를 고려해보세요.",
+        "비용과 접근 속도는 반비례 관계입니다."
+      ],
+      "tags": ["glacier", "archival", "long-term-storage"],
+      "estimatedTime": 50,
+      "points": 90,
+      "createdAt": "2025-06-26T10:00:00Z",
+      "updatedAt": "2025-06-26T10:00:00Z",
+      "isActive": true
+    },
+    {
+      "questionId": "s3_003",
+      "category": "S3",
+      "difficulty": "medium",
+      "npcCharacter": "mike_security",
+      "scenario": {
+        "title": "민감한 데이터 보안",
+        "description": "보안 담당자 Mike가 고객의 개인정보가 포함된 파일들을 S3에 안전하게 저장해야 합니다.",
+        "context": "GDPR 및 개인정보보호법 준수가 필요하며, 데이터는 암호화되어야 하고 접근 권한을 엄격히 관리해야 합니다. 또한 데이터 접근 로그도 남겨야 합니다."
+      },
+      "question": "가장 보안이 강화된 S3 설정 조합은?",
+      "options": [
+        {
+          "id": "A",
+          "text": "퍼블릭 읽기 권한 + 기본 암호화",
+          "isCorrect": false
+        },
+        {
+          "id": "B",
+          "text": "IAM 정책 + KMS 암호화 + CloudTrail 로깅 + 버킷 정책",
+          "isCorrect": true
+        },
+        {
+          "id": "C",
+          "text": "S3 기본 보안 설정만 사용",
+          "isCorrect": false
+        },
+        {
+          "id": "D",
+          "text": "VPC 엔드포인트만 설정",
+          "isCorrect": false
+        }
+      ],
+      "explanation": "민감한 데이터 보호를 위해서는 다층 보안이 필요합니다. IAM으로 접근 제어, KMS로 암호화, CloudTrail로 접근 로깅, 버킷 정책으로 추가 보안을 설정해야 합니다.",
+      "hints": [
+        "민감한 데이터에는 여러 보안 계층이 필요합니다.",
+        "암호화와 접근 제어, 로깅이 모두 중요합니다.",
+        "AWS KMS를 사용하면 키 관리를 안전하게 할 수 있습니다."
+      ],
+      "tags": ["encryption", "iam", "kms", "cloudtrail", "security"],
+      "estimatedTime": 100,
+      "points": 130,
+      "createdAt": "2025-06-26T10:00:00Z",
+      "updatedAt": "2025-06-26T10:00:00Z",
+      "isActive": true
+    },
+    {
+      "questionId": "s3_004",
+      "category": "S3",
+      "difficulty": "medium",
+      "npcCharacter": "sarah_analyst",
+      "scenario": {
+        "title": "대용량 데이터 업로드",
+        "description": "데이터 분석가 Sarah가 매일 수 GB 크기의 로그 파일들을 S3에 업로드해야 합니다.",
+        "context": "단일 파일 크기가 5GB를 넘는 경우가 많고, 네트워크 연결이 불안정할 때가 있어 업로드가 중간에 실패하는 경우가 발생합니다. 업로드 효율성을 높이고 싶습니다."
+      },
+      "question": "대용량 파일 업로드를 최적화하는 방법은?",
+      "options": [
+        {
+          "id": "A",
+          "text": "단일 PUT 요청으로 업로드",
+          "isCorrect": false
+        },
+        {
+          "id": "B",
+          "text": "Multipart Upload 사용",
+          "isCorrect": true
+        },
+        {
+          "id": "C",
+          "text": "파일을 작은 크기로 분할 후 개별 업로드",
+          "isCorrect": false
+        },
+        {
+          "id": "D",
+          "text": "FTP를 통한 업로드",
+          "isCorrect": false
+        }
+      ],
+      "explanation": "5GB 이상의 대용량 파일에는 Multipart Upload를 사용해야 합니다. 파일을 여러 부분으로 나누어 병렬 업로드하므로 속도가 빠르고, 실패 시 해당 부분만 재업로드하면 됩니다.",
+      "hints": [
+        "대용량 파일에는 특별한 업로드 방식이 있습니다.",
+        "파일을 여러 부분으로 나누어 업로드하는 방법을 고려해보세요.",
+        "실패한 부분만 다시 업로드할 수 있는 방법이 있습니다."
+      ],
+      "tags": ["multipart-upload", "large-files", "performance"],
+      "estimatedTime": 80,
+      "points": 110,
+      "createdAt": "2025-06-26T10:00:00Z",
+      "updatedAt": "2025-06-26T10:00:00Z",
+      "isActive": true
+    },
+    {
+      "questionId": "s3_005",
+      "category": "S3",
+      "difficulty": "hard",
+      "npcCharacter": "alex_ceo",
+      "scenario": {
+        "title": "글로벌 서비스 성능 최적화",
+        "description": "Alex의 서비스가 전 세계로 확장되면서 각 지역 사용자들의 파일 다운로드 속도가 느려지고 있습니다.",
+        "context": "미국 동부에 있는 S3 버킷에서 이미지와 동영상을 서비스하고 있는데, 아시아와 유럽 사용자들이 느린 속도를 호소하고 있습니다. 또한 S3 요청 비용도 증가하고 있습니다."
+      },
+      "question": "글로벌 성능 최적화를 위한 가장 효과적인 솔루션은?",
+      "options": [
+        {
+          "id": "A",
+          "text": "각 지역별로 S3 버킷 생성 후 수동 복제",
+          "isCorrect": false
+        },
+        {
+          "id": "B",
+          "text": "CloudFront CDN + S3 Transfer Acceleration",
+          "isCorrect": true
+        },
+        {
+          "id": "C",
+          "text": "더 빠른 인스턴스 타입으로 업그레이드",
+          "isCorrect": false
+        },
+        {
+          "id": "D",
+          "text": "Direct Connect 연결 설정",
+          "isCorrect": false
+        }
+      ],
+      "explanation": "글로벌 성능 최적화에는 CloudFront CDN이 가장 효과적입니다. 전 세계 엣지 로케이션에서 콘텐츠를 캐싱하여 빠른 속도를 제공하고, S3 Transfer Acceleration으로 업로드 속도도 향상시킬 수 있습니다.",
+      "hints": [
+        "전 세계 사용자에게 빠른 속도를 제공하려면 콘텐츠를 가까운 곳에 배치해야 합니다.",
+        "AWS에는 전 세계에 분산된 캐시 서비스가 있습니다.",
+        "업로드 속도도 함께 최적화할 수 있는 방법이 있습니다."
+      ],
+      "tags": ["cloudfront", "cdn", "global-performance", "transfer-acceleration"],
+      "estimatedTime": 120,
+      "points": 140,
+      "createdAt": "2025-06-26T10:00:00Z",
+      "updatedAt": "2025-06-26T10:00:00Z",
+      "isActive": true
+    }
+  ]
+}
