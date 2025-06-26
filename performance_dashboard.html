@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dashboard-header h1 {
+            color: #2d3436;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dashboard-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn.primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .control-btn.secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #2d3436;
+            border: 1px solid #ddd;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .metric-card h3 {
+            color: #2d3436;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .metric-item:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            color: #636e72;
+            font-weight: 500;
+        }
+        
+        .metric-value {
+            font-weight: 700;
+            color: #2d3436;
+        }
+        
+        .metric-value.good {
+            color: #00b894;
+        }
+        
+        .metric-value.warning {
+            color: #fdcb6e;
+        }
+        
+        .metric-value.error {
+            color: #e17055;
+        }
+        
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin: 1rem auto;
+        }
+        
+        .score-circle.excellent {
+            background: linear-gradient(135deg, #00b894, #00a085);
+        }
+        
+        .score-circle.good {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+        }
+        
+        .score-circle.poor {
+            background: linear-gradient(135deg, #e17055, #d63031);
+        }
+        
+        .recommendations {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .recommendation-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .recommendation-item.high {
+            border-left-color: #e17055;
+            background: #fff5f5;
+        }
+        
+        .recommendation-item.medium {
+            border-left-color: #fdcb6e;
+            background: #fffbf0;
+        }
+        
+        .recommendation-priority {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .recommendation-priority.high {
+            color: #e17055;
+        }
+        
+        .recommendation-priority.medium {
+            color: #fdcb6e;
+        }
+        
+        .recommendation-priority.low {
+            color: #667eea;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart {
+            width: 100%;
+            height: 300px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #636e72;
+            font-style: italic;
+        }
+        
+        .error-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .error-item {
+            background: #fff5f5;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .error-type {
+            font-weight: 700;
+            color: #e17055;
+            font-size: 0.9rem;
+        }
+        
+        .error-message {
+            color: #721c24;
+            margin: 0.5rem 0;
+        }
+        
+        .error-timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-indicator.active {
+            background: #00b894;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.inactive {
+            background: #ddd;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .real-time-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #636e72;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .metric-card {
+                padding: 1.5rem;
+            }
+            
+            .dashboard-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>🚀 Performance Dashboard</h1>
+            <p>AWS Problem Solver Game - 실시간 성능 모니터링</p>
+            
+            <div class="dashboard-controls">
+                <button class="control-btn primary" onclick="startMonitoring()">
+                    <span class="status-indicator" id="monitoring-status"></span>
+                    모니터링 시작
+                </button>
+                <button class="control-btn secondary" onclick="refreshMetrics()">새로고침</button>
+                <button class="control-btn secondary" onclick="exportReport()">리포트 내보내기</button>
+                <button class="control-btn secondary" onclick="clearMetrics()">메트릭 지우기</button>
+            </div>
+        </div>
+        
+        <!-- Real-time Stats -->
+        <div class="real-time-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="api-calls-count">0</div>
+                <div class="stat-label">API 호출</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avg-response-time">0ms</div>
+                <div class="stat-label">평균 응답시간</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="error-count">0</div>
+                <div class="stat-label">오류 수</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="memory-usage">0MB</div>
+                <div class="stat-label">메모리 사용량</div>
+            </div>
+        </div>
+        
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+            <!-- Load Performance -->
+            <div class="metric-card">
+                <h3>로딩 성능</h3>
+                <div class="score-circle" id="load-score">
+                    <span id="load-score-value">-</span>
+                </div>
+                <div id="load-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">DOM Content Loaded</span>
+                        <span class="metric-value" id="dcl-time">-</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Load Complete</span>
+                        <span class="metric-value" id="load-time">-</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">First Contentful Paint</span>
+                        <span class="metric-value" id="fcp-time">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Performance -->
+            <div class="metric-card">
+                <h3>API 성능</h3>
+                <div id="api-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">총 API 호출</span>
+                        <span class="metric-value" id="total-api-calls">0</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">평균 응답시간</span>
+                        <span class="metric-value" id="avg-api-time">0ms</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">오류율</span>
+                        <span class="metric-value" id="api-error-rate">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Memory Usage -->
+            <div class="metric-card">
+                <h3>메모리 사용량</h3>
+                <div id="memory-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">현재 사용량</span>
+                        <span class="metric-value" id="current-memory">-</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">최대 사용량</span>
+                        <span class="metric-value" id="max-memory">-</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">사용률</span>
+                        <span class="metric-value" id="memory-utilization">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Experience -->
+            <div class="metric-card">
+                <h3>사용자 경험</h3>
+                <div id="ux-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">총 상호작용</span>
+                        <span class="metric-value" id="total-interactions">0</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">긴 작업</span>
+                        <span class="metric-value" id="long-tasks">0</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">응답성</span>
+                        <span class="metric-value" id="responsiveness">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommendations -->
+        <div class="recommendations">
+            <h3>성능 개선 권장사항</h3>
+            <div id="recommendations-list">
+                <p style="color: #636e72; font-style: italic;">모니터링을 시작하면 권장사항이 표시됩니다.</p>
+            </div>
+        </div>
+        
+        <!-- Error Log -->
+        <div class="chart-container">
+            <h3>오류 로그</h3>
+            <div class="error-list" id="error-log">
+                <p style="color: #636e72; font-style: italic; text-align: center; padding: 2rem;">
+                    오류가 발생하면 여기에 표시됩니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Performance Monitor -->
+    <script src="src/frontend/performance_monitor.js"></script>
+    
+    <script>
+        let performanceMonitor;
+        let isMonitoring = false;
+        let updateInterval;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            performanceMonitor = new PerformanceMonitor();
+            window.performanceMonitor = performanceMonitor;
+            
+            updateStatusIndicator();
+            
+            // Start auto-refresh
+            updateInterval = setInterval(refreshMetrics, 5000);
+            
+            // Initial metrics load
+            setTimeout(refreshMetrics, 1000);
+        });
+        
+        function startMonitoring() {
+            if (!isMonitoring) {
+                performanceMonitor.startMonitoring();
+                isMonitoring = true;
+                updateStatusIndicator();
+                
+                // Simulate some activity for demo
+                simulateActivity();
+            }
+        }
+        
+        function stopMonitoring() {
+            if (isMonitoring) {
+                performanceMonitor.stopMonitoring();
+                isMonitoring = false;
+                updateStatusIndicator();
+            }
+        }
+        
+        function refreshMetrics() {
+            if (!performanceMonitor) return;
+            
+            const report = performanceMonitor.getReport();
+            updateDashboard(report);
+        }
+        
+        function updateDashboard(report) {
+            const { metrics, analysis } = report;
+            
+            // Update real-time stats
+            updateRealTimeStats(metrics, analysis);
+            
+            // Update load performance
+            updateLoadPerformance(analysis.loadPerformance);
+            
+            // Update API performance
+            updateAPIPerformance(analysis.apiPerformance);
+            
+            // Update memory usage
+            updateMemoryUsage(analysis.memoryUsage);
+            
+            // Update user experience
+            updateUserExperience(analysis.userExperience);
+            
+            // Update recommendations
+            updateRecommendations(analysis.recommendations);
+            
+            // Update error log
+            updateErrorLog(analysis.errors);
+        }
+        
+        function updateRealTimeStats(metrics, analysis) {
+            // API calls count
+            const apiCallsCount = Object.values(metrics.apiCalls)
+                .reduce((sum, api) => sum + api.count, 0);
+            document.getElementById('api-calls-count').textContent = apiCallsCount;
+            
+            // Average response time
+            const avgResponseTime = Object.values(metrics.apiCalls)
+                .reduce((sum, api, _, arr) => sum + api.avgDuration / arr.length, 0);
+            document.getElementById('avg-response-time').textContent = 
+                Math.round(avgResponseTime) + 'ms';
+            
+            // Error count
+            document.getElementById('error-count').textContent = metrics.errors.length;
+            
+            // Memory usage
+            const memoryEntries = Object.values(metrics.memoryUsage);
+            if (memoryEntries.length > 0) {
+                const latestMemory = memoryEntries[memoryEntries.length - 1];
+                const memoryMB = Math.round(latestMemory.usedJSHeapSize / 1024 / 1024);
+                document.getElementById('memory-usage').textContent = memoryMB + 'MB';
+            }
+        }
+        
+        function updateLoadPerformance(loadPerf) {
+            if (!loadPerf) return;
+            
+            // Update score circle
+            const scoreElement = document.getElementById('load-score');
+            const scoreValue = document.getElementById('load-score-value');
+            
+            scoreValue.textContent = loadPerf.score || '-';
+            
+            if (loadPerf.score >= 80) {
+                scoreElement.className = 'score-circle excellent';
+            } else if (loadPerf.score >= 60) {
+                scoreElement.className = 'score-circle good';
+            } else {
+                scoreElement.className = 'score-circle poor';
+            }
+            
+            // Update metrics
+            document.getElementById('dcl-time').textContent = 
+                loadPerf.domContentLoaded ? Math.round(loadPerf.domContentLoaded) + 'ms' : '-';
+            document.getElementById('load-time').textContent = 
+                loadPerf.loadComplete ? Math.round(loadPerf.loadComplete) + 'ms' : '-';
+            document.getElementById('fcp-time').textContent = 
+                loadPerf.firstContentfulPaint ? Math.round(loadPerf.firstContentfulPaint) + 'ms' : '-';
+        }
+        
+        function updateAPIPerformance(apiPerf) {
+            const apis = Object.values(apiPerf);
+            
+            const totalCalls = apis.reduce((sum, api) => sum + api.count, 0);
+            const avgTime = apis.length > 0 ? 
+                apis.reduce((sum, api) => sum + api.avgDuration, 0) / apis.length : 0;
+            const totalErrors = apis.reduce((sum, api) => sum + api.errors, 0);
+            const errorRate = totalCalls > 0 ? (totalErrors / totalCalls) * 100 : 0;
+            
+            document.getElementById('total-api-calls').textContent = totalCalls;
+            document.getElementById('avg-api-time').textContent = Math.round(avgTime) + 'ms';
+            document.getElementById('api-error-rate').textContent = errorRate.toFixed(1) + '%';
+        }
+        
+        function updateMemoryUsage(memoryUsage) {
+            if (!memoryUsage) return;
+            
+            const currentMB = Math.round(memoryUsage.current.usedJSHeapSize / 1024 / 1024);
+            const maxMB = Math.round(memoryUsage.current.jsHeapSizeLimit / 1024 / 1024);
+            const utilization = memoryUsage.utilizationRate.toFixed(1);
+            
+            document.getElementById('current-memory').textContent = currentMB + 'MB';
+            document.getElementById('max-memory').textContent = maxMB + 'MB';
+            document.getElementById('memory-utilization').textContent = utilization + '%';
+            
+            // Color code utilization
+            const utilizationElement = document.getElementById('memory-utilization');
+            if (memoryUsage.utilizationRate > 80) {
+                utilizationElement.className = 'metric-value error';
+            } else if (memoryUsage.utilizationRate > 60) {
+                utilizationElement.className = 'metric-value warning';
+            } else {
+                utilizationElement.className = 'metric-value good';
+            }
+        }
+        
+        function updateUserExperience(uxData) {
+            if (!uxData) return;
+            
+            document.getElementById('total-interactions').textContent = uxData.totalInteractions;
+            document.getElementById('long-tasks').textContent = uxData.longTasks.length;
+            document.getElementById('responsiveness').textContent = uxData.responsiveness;
+            
+            // Color code responsiveness
+            const responsivenessElement = document.getElementById('responsiveness');
+            if (uxData.responsiveness === 'excellent' || uxData.responsiveness === 'good') {
+                responsivenessElement.className = 'metric-value good';
+            } else if (uxData.responsiveness === 'fair') {
+                responsivenessElement.className = 'metric-value warning';
+            } else {
+                responsivenessElement.className = 'metric-value error';
+            }
+        }
+        
+        function updateRecommendations(recommendations) {
+            const container = document.getElementById('recommendations-list');
+            
+            if (!recommendations || recommendations.length === 0) {
+                container.innerHTML = '<p style="color: #00b894; font-style: italic;">모든 성능 지표가 양호합니다! 👍</p>';
+                return;
+            }
+            
+            container.innerHTML = recommendations.map(rec => `
+                <div class="recommendation-item ${rec.priority}">
+                    <div class="recommendation-priority ${rec.priority}">${rec.priority} 우선순위</div>
+                    <div>${rec.message}</div>
+                </div>
+            `).join('');
+        }
+        
+        function updateErrorLog(errors) {
+            const container = document.getElementById('error-log');
+            
+            if (!errors || !errors.recent || errors.recent.length === 0) {
+                container.innerHTML = '<p style="color: #00b894; font-style: italic; text-align: center; padding: 2rem;">오류가 없습니다! 🎉</p>';
+                return;
+            }
+            
+            container.innerHTML = errors.recent.map(error => `
+                <div class="error-item">
+                    <div class="error-type">${error.type.toUpperCase()} ERROR</div>
+                    <div class="error-message">${error.message}</div>
+                    <div class="error-timestamp">${new Date(error.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+        
+        function updateStatusIndicator() {
+            const indicator = document.getElementById('monitoring-status');
+            if (isMonitoring) {
+                indicator.className = 'status-indicator active';
+            } else {
+                indicator.className = 'status-indicator inactive';
+            }
+        }
+        
+        function exportReport() {
+            if (performanceMonitor) {
+                performanceMonitor.exportReport();
+            }
+        }
+        
+        function clearMetrics() {
+            if (performanceMonitor) {
+                performanceMonitor.clearMetrics();
+                refreshMetrics();
+            }
+        }
+        
+        // Simulate some activity for demo purposes
+        function simulateActivity() {
+            // Simulate API calls
+            setTimeout(() => {
+                fetch('/api/test').catch(() => {});
+            }, 1000);
+            
+            // Simulate user interactions
+            setTimeout(() => {
+                if (performanceMonitor) {
+                    performanceMonitor.recordUserInteraction('click', 'button', 50);
+                    performanceMonitor.recordUserInteraction('scroll', 'window', 0);
+                }
+            }, 2000);
+            
+            // Simulate some errors for demo
+            setTimeout(() => {
+                try {
+                    throw new Error('Demo error for testing');
+                } catch (e) {
+                    // Error will be caught by global handler
+                }
+            }, 3000);
+        }
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            if (performanceMonitor) {
+                performanceMonitor.stopMonitoring();
+            }
+        });
+    </script>
+</body>
+</html>

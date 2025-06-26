@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Unit Tests</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-result.pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .test-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .test-btn.primary {
+            background: #007bff;
+            color: white;
+        }
+        .test-btn.primary:hover {
+            background: #0056b3;
+        }
+        .test-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .test-btn.secondary:hover {
+            background: #545b62;
+        }
+        .test-stats {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .console-output {
+            background: #2d3436;
+            color: #00b894;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .mock-game-area {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Frontend Unit Tests</h1>
+            <p>AWS Problem Solver Game - JavaScript 컴포넌트 테스트</p>
+        </div>
+        
+        <div class="test-stats">
+            <div class="stat-item">
+                <div class="stat-number" id="total-tests">0</div>
+                <div class="stat-label">총 테스트</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="passed-tests">0</div>
+                <div class="stat-label">통과</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="failed-tests">0</div>
+                <div class="stat-label">실패</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="success-rate">0%</div>
+                <div class="stat-label">성공률</div>
+            </div>
+        </div>
+        
+        <div class="test-controls">
+            <button class="test-btn primary" onclick="runAllTests()">모든 테스트 실행</button>
+            <button class="test-btn secondary" onclick="runGameManagerTests()">GameManager 테스트</button>
+            <button class="test-btn secondary" onclick="runNPCSystemTests()">NPC System 테스트</button>
+            <button class="test-btn secondary" onclick="runLevelSystemTests()">Level System 테스트</button>
+            <button class="test-btn secondary" onclick="runAWSAdvisorTests()">AWS Advisor 테스트</button>
+            <button class="test-btn secondary" onclick="clearResults()">결과 지우기</button>
+        </div>
+        
+        <!-- Mock Game Environment -->
+        <div class="mock-game-area">
+            <h4>Mock Game Environment</h4>
+            <div id="mock-elements" style="display: none;">
+                <!-- Mock DOM elements for testing -->
+                <div id="loading-screen"></div>
+                <div id="game-container"></div>
+                <div id="welcome-screen" class="screen"></div>
+                <div id="game-screen" class="screen"></div>
+                <div id="user-score">0</div>
+                <div id="user-level">1</div>
+                <div id="user-accuracy">0%</div>
+                <div id="progress-fill"></div>
+                <div id="progress-text">0/100</div>
+                <div class="npc-dialogue-area" style="display: none;"></div>
+                <div id="dialogue-text"></div>
+                <div id="continue-dialogue-btn"></div>
+                <div id="skip-dialogue-btn"></div>
+                <div id="question-category"></div>
+                <div id="question-difficulty"></div>
+                <div id="question-points"></div>
+                <div id="question-timer"></div>
+                <div id="scenario-title"></div>
+                <div id="scenario-description"></div>
+                <div id="scenario-context"></div>
+                <div id="question-text"></div>
+                <div id="options-container"></div>
+                <div id="submit-answer-btn"></div>
+                <div id="hint-btn"></div>
+            </div>
+        </div>
+        
+        <!-- Test Results -->
+        <div class="test-section">
+            <h3>GameManager 테스트</h3>
+            <div id="gamemanager-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>NPC System 테스트</h3>
+            <div id="npcsystem-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Level System 테스트</h3>
+            <div id="levelsystem-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>AWS Advisor 테스트</h3>
+            <div id="awsadvisor-results"></div>
+        </div>
+        
+        <div class="console-output" id="console-output">
+            <div>Frontend Test Console</div>
+            <div>Ready for testing...</div>
+        </div>
+    </div>
+
+    <!-- Load Game Scripts -->
+    <script src="../src/frontend/level_system.js"></script>
+    <script src="../src/frontend/npc_system.js"></script>
+    <script src="../src/frontend/aws_advisor.js"></script>
+    <script src="../src/frontend/game.js"></script>
+
+    <script>
+        // Test Framework
+        class TestFramework {
+            constructor() {
+                this.tests = [];
+                this.results = {
+                    total: 0,
+                    passed: 0,
+                    failed: 0
+                };
+            }
+            
+            test(name, testFunction) {
+                this.tests.push({ name, testFunction });
+            }
+            
+            async runTests(category = 'all') {
+                this.results = { total: 0, passed: 0, failed: 0 };
+                
+                const filteredTests = category === 'all' ? 
+                    this.tests : 
+                    this.tests.filter(test => test.name.toLowerCase().includes(category.toLowerCase()));
+                
+                for (const test of filteredTests) {
+                    await this.runSingleTest(test);
+                }
+                
+                this.updateStats();
+                this.logMessage(`테스트 완료: ${this.results.passed}/${this.results.total} 통과`);
+            }
+            
+            async runSingleTest(test) {
+                this.results.total++;
+                
+                try {
+                    await test.testFunction();
+                    this.results.passed++;
+                    this.addResult(test.name, 'pass', '✅ 통과');
+                    this.logMessage(`✅ ${test.name} - 통과`);
+                } catch (error) {
+                    this.results.failed++;
+                    this.addResult(test.name, 'fail', `❌ 실패: ${error.message}`);
+                    this.logMessage(`❌ ${test.name} - 실패: ${error.message}`);
+                }
+            }
+            
+            addResult(testName, status, message) {
+                const category = this.getCategoryFromTestName(testName);
+                const resultsContainer = document.getElementById(`${category}-results`);
+                
+                if (resultsContainer) {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = `test-result ${status}`;
+                    resultDiv.innerHTML = `<strong>${testName}</strong>: ${message}`;
+                    resultsContainer.appendChild(resultDiv);
+                }
+            }
+            
+            getCategoryFromTestName(testName) {
+                if (testName.includes('GameManager')) return 'gamemanager';
+                if (testName.includes('NPC')) return 'npcsystem';
+                if (testName.includes('Level')) return 'levelsystem';
+                if (testName.includes('AWS')) return 'awsadvisor';
+                return 'gamemanager';
+            }
+            
+            updateStats() {
+                document.getElementById('total-tests').textContent = this.results.total;
+                document.getElementById('passed-tests').textContent = this.results.passed;
+                document.getElementById('failed-tests').textContent = this.results.failed;
+                
+                const successRate = this.results.total > 0 ? 
+                    Math.round((this.results.passed / this.results.total) * 100) : 0;
+                document.getElementById('success-rate').textContent = `${successRate}%`;
+            }
+            
+            logMessage(message) {
+                const console = document.getElementById('console-output');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                console.appendChild(logEntry);
+                console.scrollTop = console.scrollHeight;
+            }
+            
+            assert(condition, message) {
+                if (!condition) {
+                    throw new Error(message || 'Assertion failed');
+                }
+            }
+            
+            assertEqual(actual, expected, message) {
+                if (actual !== expected) {
+                    throw new Error(message || `Expected ${expected}, got ${actual}`);
+                }
+            }
+            
+            assertNotNull(value, message) {
+                if (value === null || value === undefined) {
+                    throw new Error(message || 'Value should not be null or undefined');
+                }
+            }
+            
+            assertInstanceOf(obj, constructor, message) {
+                if (!(obj instanceof constructor)) {
+                    throw new Error(message || `Object is not an instance of ${constructor.name}`);
+                }
+            }
+        }
+        
+        // Initialize test framework
+        const testFramework = new TestFramework();
+        
+        // GameManager Tests
+        testFramework.test('GameManager - 초기화', () => {
+            const gameManager = new GameManager();
+            testFramework.assertNotNull(gameManager);
+            testFramework.assertNotNull(gameManager.npcSystem);
+            testFramework.assertNotNull(gameManager.levelSystem);
+            testFramework.assertNotNull(gameManager.awsAdvisor);
+        });
+        
+        testFramework.test('GameManager - API URL 설정', () => {
+            const gameManager = new GameManager();
+            const apiUrl = gameManager.getApiBaseUrl();
+            testFramework.assert(typeof apiUrl === 'string');
+            testFramework.assert(apiUrl.length > 0);
+        });
+        
+        testFramework.test('GameManager - 사용자 ID 생성', () => {
+            const gameManager = new GameManager();
+            const userId1 = gameManager.generateUserId();
+            const userId2 = gameManager.generateUserId();
+            
+            testFramework.assert(typeof userId1 === 'string');
+            testFramework.assert(userId1.startsWith('user_'));
+            testFramework.assert(userId1 !== userId2);
+        });
+        
+        testFramework.test('GameManager - 세션 ID 생성', () => {
+            const gameManager = new GameManager();
+            const sessionId1 = gameManager.generateSessionId();
+            const sessionId2 = gameManager.generateSessionId();
+            
+            testFramework.assert(typeof sessionId1 === 'string');
+            testFramework.assert(sessionId1.startsWith('session_'));
+            testFramework.assert(sessionId1 !== sessionId2);
+        });
+        
+        testFramework.test('GameManager - 문제 생성', () => {
+            const gameManager = new GameManager();
+            const question = gameManager.generateMockQuestion();
+            
+            testFramework.assertNotNull(question);
+            testFramework.assertNotNull(question.questionId);
+            testFramework.assertNotNull(question.category);
+            testFramework.assertNotNull(question.difficulty);
+            testFramework.assertNotNull(question.options);
+            testFramework.assert(Array.isArray(question.options));
+            testFramework.assertEqual(question.options.length, 4);
+        });
+        
+        // NPC System Tests
+        testFramework.test('NPC System - 초기화', () => {
+            const mockGameManager = { apiBaseUrl: 'test' };
+            const npcSystem = new NPCSystem(mockGameManager);
+            
+            testFramework.assertNotNull(npcSystem);
+            testFramework.assertNotNull(npcSystem.npcData);
+            testFramework.assert(Object.keys(npcSystem.npcData).length > 0);
+        });
+        
+        testFramework.test('NPC System - NPC 데이터 구조', () => {
+            const mockGameManager = { apiBaseUrl: 'test' };
+            const npcSystem = new NPCSystem(mockGameManager);
+            
+            const npcIds = ['alex_ceo', 'sarah_analyst', 'mike_security', 'jenny_developer'];
+            
+            npcIds.forEach(npcId => {
+                const npcData = npcSystem.npcData[npcId];
+                testFramework.assertNotNull(npcData);
+                testFramework.assertNotNull(npcData.name);
+                testFramework.assertNotNull(npcData.title);
+                testFramework.assertNotNull(npcData.personality);
+                testFramework.assert(Array.isArray(npcData.greetings));
+                testFramework.assert(npcData.greetings.length > 0);
+            });
+        });
+        
+        testFramework.test('NPC System - 향상된 대체 힌트 생성', () => {
+            const mockGameManager = { apiBaseUrl: 'test' };
+            const npcSystem = new NPCSystem(mockGameManager);
+            npcSystem.currentNpc = 'alex_ceo';
+            
+            const questionData = {
+                category: 'EC2',
+                difficulty: 'medium',
+                scenario: { description: 'Test scenario' },
+                question: 'Test question'
+            };
+            
+            const hint = npcSystem.generateEnhancedFallbackHint(
+                questionData, 
+                npcSystem.npcData['alex_ceo'], 
+                1
+            );
+            
+            testFramework.assertNotNull(hint);
+            testFramework.assertNotNull(hint.hint);
+            testFramework.assertNotNull(hint.message);
+            testFramework.assertEqual(hint.npcId, 'alex_ceo');
+            testFramework.assertEqual(hint.hintLevel, 1);
+            testFramework.assertEqual(hint.source, 'enhanced_fallback');
+        });
+        
+        // Level System Tests
+        testFramework.test('Level System - 초기화', () => {
+            const mockGameManager = { currentUser: { username: 'test' } };
+            const levelSystem = new LevelSystem(mockGameManager);
+            
+            testFramework.assertNotNull(levelSystem);
+            testFramework.assertEqual(levelSystem.currentLevel, 1);
+            testFramework.assertEqual(levelSystem.currentExp, 0);
+            testFramework.assertEqual(levelSystem.totalScore, 0);
+        });
+        
+        testFramework.test('Level System - 레벨 계산', () => {
+            const mockGameManager = { currentUser: { username: 'test' } };
+            const levelSystem = new LevelSystem(mockGameManager);
+            
+            // 경험치 설정
+            levelSystem.currentExp = 150;
+            const level = levelSystem.calculateLevel();
+            
+            testFramework.assert(level >= 1);
+            testFramework.assert(level <= 20);
+        });
+        
+        testFramework.test('Level System - 점수 추가', () => {
+            const mockGameManager = { 
+                currentUser: { username: 'test' },
+                questionsAnswered: 0,
+                correctAnswers: 0
+            };
+            const levelSystem = new LevelSystem(mockGameManager);
+            
+            const initialScore = levelSystem.totalScore;
+            const result = levelSystem.addScore(100, { isCorrect: true });
+            
+            testFramework.assertEqual(levelSystem.totalScore, initialScore + 100);
+            testFramework.assertNotNull(result);
+            testFramework.assert(typeof result.leveledUp === 'boolean');
+        });
+        
+        testFramework.test('Level System - 성취 배지 확인', () => {
+            const mockGameManager = { 
+                currentUser: { username: 'test' },
+                questionsAnswered: 1,
+                correctAnswers: 1
+            };
+            const levelSystem = new LevelSystem(mockGameManager);
+            
+            const achievements = levelSystem.checkAchievements({ isCorrect: true });
+            testFramework.assert(Array.isArray(achievements));
+        });
+        
+        testFramework.test('Level System - 현재 타이틀 가져오기', () => {
+            const mockGameManager = { currentUser: { username: 'test' } };
+            const levelSystem = new LevelSystem(mockGameManager);
+            
+            const title = levelSystem.getCurrentTitle();
+            testFramework.assertNotNull(title);
+            testFramework.assertNotNull(title.title);
+            testFramework.assertNotNull(title.color);
+            testFramework.assertNotNull(title.icon);
+        });
+        
+        // AWS Advisor Tests
+        testFramework.test('AWS Advisor - 초기화', () => {
+            const mockGameManager = { currentUser: { username: 'test' } };
+            const awsAdvisor = new AWSAdvisor(mockGameManager);
+            
+            testFramework.assertNotNull(awsAdvisor);
+            testFramework.assertNotNull(awsAdvisor.serviceCategories);
+            testFramework.assert(Object.keys(awsAdvisor.serviceCategories).length > 0);
+        });
+        
+        testFramework.test('AWS Advisor - 서비스 카테고리', () => {
+            const mockGameManager = { currentUser: { username: 'test' } };
+            const awsAdvisor = new AWSAdvisor(mockGameManager);
+            
+            const categories = awsAdvisor.serviceCategories;
+            const expectedCategories = ['Compute', 'Storage', 'Database', 'Networking'];
+            
+            expectedCategories.forEach(category => {
+                testFramework.assert(categories.hasOwnProperty(category));
+                testFramework.assert(Array.isArray(categories[category]));
+                testFramework.assert(categories[category].length > 0);
+            });
+        });
+        
+        testFramework.test('AWS Advisor - 대체 서비스 설명', () => {
+            const mockGameManager = { currentUser: { username: 'test' } };
+            const awsAdvisor = new AWSAdvisor(mockGameManager);
+            
+            const explanation = awsAdvisor.getFallbackServiceExplanation('EC2');
+            testFramework.assertNotNull(explanation);
+            testFramework.assert(explanation.includes('EC2'));
+            testFramework.assert(explanation.includes('개요'));
+        });
+        
+        testFramework.test('AWS Advisor - FAQ 답변', () => {
+            const mockGameManager = { currentUser: { username: 'test' } };
+            const awsAdvisor = new AWSAdvisor(mockGameManager);
+            
+            const answer = awsAdvisor.getFallbackFAQAnswer('AWS 비용을 최적화하는 방법은?');
+            testFramework.assertNotNull(answer);
+            testFramework.assert(answer.includes('비용 최적화'));
+        });
+        
+        // Test execution functions
+        async function runAllTests() {
+            testFramework.logMessage('모든 테스트 실행 시작...');
+            clearResults();
+            await testFramework.runTests('all');
+        }
+        
+        async function runGameManagerTests() {
+            testFramework.logMessage('GameManager 테스트 실행...');
+            clearResults();
+            await testFramework.runTests('gamemanager');
+        }
+        
+        async function runNPCSystemTests() {
+            testFramework.logMessage('NPC System 테스트 실행...');
+            clearResults();
+            await testFramework.runTests('npc');
+        }
+        
+        async function runLevelSystemTests() {
+            testFramework.logMessage('Level System 테스트 실행...');
+            clearResults();
+            await testFramework.runTests('level');
+        }
+        
+        async function runAWSAdvisorTests() {
+            testFramework.logMessage('AWS Advisor 테스트 실행...');
+            clearResults();
+            await testFramework.runTests('aws');
+        }
+        
+        function clearResults() {
+            const resultContainers = [
+                'gamemanager-results',
+                'npcsystem-results', 
+                'levelsystem-results',
+                'awsadvisor-results'
+            ];
+            
+            resultContainers.forEach(id => {
+                const container = document.getElementById(id);
+                if (container) {
+                    container.innerHTML = '';
+                }
+            });
+            
+            testFramework.results = { total: 0, passed: 0, failed: 0 };
+            testFramework.updateStats();
+        }
+        
+        // Initialize
+        testFramework.logMessage('Frontend Test Framework 초기화 완료');
+        testFramework.logMessage(`총 ${testFramework.tests.length}개 테스트 준비됨`);
+        testFramework.logMessage('테스트를 실행하려면 버튼을 클릭하세요.');
+    </script>
+</body>
+</html>
