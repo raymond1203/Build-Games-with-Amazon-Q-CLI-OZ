@@ -30,10 +30,8 @@ class GameManager {
     }
     
     getApiBaseUrl() {
-        // In production, this would be set via environment variables
-        return window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000/dev'  // Local development
-            : 'https://your-api-id.execute-api.region.amazonaws.com/dev';  // Production
+        // 설정에서 API URL 가져오기
+        return window.gameConfig ? window.gameConfig.get('api.baseUrl') : 'http://localhost:3000/dev';
     }
     
     init() {

@@ -18,6 +18,43 @@ Parameters:
       - dev
       - prod
     Description: Environment name
+  
+  ProjectName:
+    Type: String
+    Default: aws-problem-solver-game
+    Description: Project name for resource naming
+  
+  CustomDomain:
+    Type: String
+    Default: ""
+    Description: Custom domain name (optional)
+  
+  CorsOrigins:
+    Type: String
+    Default: "*"
+    Description: CORS allowed origins
+  
+  EnhancedMonitoring:
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+    Description: Enable enhanced monitoring
+  
+  XRayTracing:
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+    Description: Enable X-Ray tracing
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, "prod"]
+  HasCustomDomain: !Not [!Equals [!Ref CustomDomain, ""]]
+  EnableEnhancedMonitoring: !Equals [!Ref EnhancedMonitoring, "true"]
+  EnableXRayTracing: !Equals [!Ref XRayTracing, "true"]
 
 Resources:
   # API Gateway
@@ -28,11 +65,13 @@ Resources:
       Cors:
         AllowMethods: "'GET,POST,OPTIONS'"
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-        AllowOrigin: "'*'"
+        AllowOrigin: !Sub "'${CorsOrigins}'"
+      TracingConfig:
+        TracingEnabled: !If [EnableXRayTracing, true, false]
       DefinitionBody:
         swagger: '2.0'
         info:
-          title: AWS Problem Solver Game API
+          title: !Sub '${ProjectName} API'
           version: '1.0'
         paths:
           /hints:
@@ -63,7 +102,7 @@ Resources:
   HintProviderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub 'aws-game-hint-provider-${Environment}'
+      FunctionName: !Sub '${ProjectName}-hint-provider-${Environment}'
       CodeUri: src/lambda_functions/
       Handler: hint_provider.lambda_handler
       Description: Amazon Q CLI를 활용한 힌트 제공 시스템
@@ -72,6 +111,8 @@ Resources:
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+          DYNAMODB_TABLE: !Ref GameDataTable
       Events:
         HintAPI:
           Type: Api
@@ -94,12 +135,22 @@ Resources:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
               Resource: '*'
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource: !GetAtt GameDataTable.Arn
+      Tracing: !If [EnableXRayTracing, Active, PassThrough]
 
-  # DynamoDB Tables (for future use)
+  # DynamoDB Tables
   GameDataTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub 'aws-game-data-${Environment}'
+      TableName: !Sub '${ProjectName}-data-${Environment}'
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: PK
@@ -114,12 +165,12 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
       PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: true
+        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
       SSESpecification:
         SSEEnabled: true
       Tags:
         - Key: Project
-          Value: AWS-Problem-Solver-Game
+          Value: !Ref ProjectName
         - Key: Environment
           Value: !Ref Environment
 
@@ -127,7 +178,7 @@ Resources:
   GameAssetsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'aws-game-assets-${Environment}-${AWS::AccountId}'
+      BucketName: !Sub '${ProjectName}-assets-${Environment}-${AWS::AccountId}'
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
         BlockPublicPolicy: false
@@ -146,6 +197,16 @@ Resources:
             AllowedOrigins:
               - '*'
             MaxAge: 3600
+      NotificationConfiguration:
+        CloudWatchConfigurations:
+          - Event: s3:ObjectCreated:*
+            CloudWatchConfiguration:
+              LogGroupName: !Sub '/aws/s3/${ProjectName}-${Environment}'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
 
   # S3 Bucket Policy
   GameAssetsBucketPolicy:
@@ -172,7 +233,7 @@ Resources:
               OriginAccessIdentity: ''
         Enabled: true
         DefaultRootObject: index.html
-        Comment: !Sub 'AWS Problem Solver Game CDN - ${Environment}'
+        Comment: !Sub '${ProjectName} CDN - ${Environment}'
         DefaultCacheBehavior:
           AllowedMethods:
             - DELETE
@@ -189,11 +250,82 @@ Resources:
               Forward: none
           ViewerProtocolPolicy: redirect-to-https
           MinTTL: 0
-          DefaultTTL: 86400
-          MaxTTL: 31536000
-        PriceClass: PriceClass_100
+          DefaultTTL: !If [IsProduction, 86400, 300]
+          MaxTTL: !If [IsProduction, 31536000, 3600]
+        PriceClass: !If [IsProduction, PriceClass_All, PriceClass_100]
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        Logging: !If
+          - EnableEnhancedMonitoring
+          - Bucket: !GetAtt LoggingBucket.DomainName
+            Prefix: cloudfront-logs/
+          - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Logging Bucket (only for enhanced monitoring)
+  LoggingBucket:
+    Type: AWS::S3::Bucket
+    Condition: EnableEnhancedMonitoring
+    Properties:
+      BucketName: !Sub '${ProjectName}-logs-${Environment}-${AWS::AccountId}'
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldLogs
+            Status: Enabled
+            ExpirationInDays: !If [IsProduction, 90, 30]
+
+  # CloudWatch Log Groups
+  HintProviderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ProjectName}-hint-provider-${Environment}'
+      RetentionInDays: !If [IsProduction, 30, 7]
+
+  # CloudWatch Alarms (for production)
+  HighErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsProduction
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-HighErrorRate'
+      AlarmDescription: 'High error rate detected'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref HintProviderFunction
+
+  HighLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsProduction
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-HighLatency'
+      AlarmDescription: 'High latency detected'
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref HintProviderFunction
 
 Outputs:
   GameAPIUrl:
@@ -220,8 +352,20 @@ Outputs:
     Export:
       Name: !Sub '${AWS::StackName}-GameCDNUrl'
 
+  GameCDNDistributionId:
+    Description: CloudFront distribution ID
+    Value: !Ref GameCDN
+    Export:
+      Name: !Sub '${AWS::StackName}-GameCDNDistributionId'
+
   DynamoDBTableName:
     Description: DynamoDB table name
     Value: !Ref GameDataTable
     Export:
       Name: !Sub '${AWS::StackName}-DynamoDBTableName'
+
+  GameURL:
+    Description: Game access URL
+    Value: !Sub 'https://${GameCDN.DomainName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-GameURL'
