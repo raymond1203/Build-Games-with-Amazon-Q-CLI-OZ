@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPC System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .npc-dialogue-area {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .npc-character {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        }
+        .npc-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .dialogue-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+        .dialogue-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #2d3436;
+            margin-bottom: 1.5rem;
+            min-height: 3rem;
+        }
+        .dialogue-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        .dialogue-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .test-controls {
+            margin-bottom: 20px;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>NPC System Test</h1>
+        
+        <div class="test-controls">
+            <button onclick="testNPC('alex_ceo')">Test Alex (CEO)</button>
+            <button onclick="testNPC('sarah_analyst')">Test Sarah (Analyst)</button>
+            <button onclick="testNPC('mike_security')">Test Mike (Security)</button>
+            <button onclick="testNPC('jenny_developer')">Test Jenny (Developer)</button>
+        </div>
+        
+        <div class="npc-dialogue-area" style="display: none;">
+            <div class="npc-character">
+                <div id="current-npc-avatar" class="npc-avatar-large">👔</div>
+                <div class="npc-status">
+                    <h3 id="current-npc-name">NPC Name</h3>
+                    <p id="current-npc-title">NPC Title</p>
+                </div>
+            </div>
+            
+            <div class="dialogue-box">
+                <div id="dialogue-text" class="dialogue-text">
+                    대화 내용이 여기에 표시됩니다...
+                </div>
+                <div class="dialogue-actions">
+                    <button id="continue-dialogue-btn" class="dialogue-btn">계속</button>
+                    <button id="skip-dialogue-btn" class="dialogue-btn" style="display: none;">건너뛰기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock GameManager for testing
+        class MockGameManager {
+            constructor() {
+                this.apiBaseUrl = 'http://localhost:3000/dev';
+                this.currentSession = { id: 'test_session' };
+            }
+            
+            async loadQuestion() {
+                console.log('Mock: Loading question...');
+                // Simulate question loading
+                setTimeout(() => {
+                    document.querySelector('.npc-dialogue-area').style.display = 'none';
+                    alert('Question would be loaded here!');
+                }, 1000);
+            }
+        }
+
+        // Initialize mock game manager and NPC system
+        const mockGameManager = new MockGameManager();
+        
+        // NPC System (simplified version for testing)
+        class TestNPCSystem {
+            constructor(gameManager) {
+                this.gameManager = gameManager;
+                this.currentNpc = null;
+                this.isTyping = false;
+                this.typingSpeed = 50;
+                
+                this.npcData = {
+                    alex_ceo: {
+                        name: "Alex",
+                        title: "스타트업 CEO",
+                        avatar: "👔",
+                        greetings: [
+                            "안녕하세요! 저는 TechStart의 CEO Alex입니다.",
+                            "우리 서비스가 갑자기 인기를 끌면서 기술적인 문제들이 생겼어요.",
+                            "시간이 정말 중요해요! 빠른 해결책이 필요해요!"
+                        ]
+                    },
+                    sarah_analyst: {
+                        name: "Sarah",
+                        title: "데이터 분석가",
+                        avatar: "📊",
+                        greetings: [
+                            "안녕하세요, 데이터 분석가 Sarah입니다.",
+                            "대용량 데이터 처리에 관련된 AWS 솔루션에 대해 궁금한 점이 있어요.",
+                            "매일 처리해야 하는 데이터량이 계속 증가하고 있어서 도움이 필요해요."
+                        ]
+                    },
+                    mike_security: {
+                        name: "Mike",
+                        title: "보안 담당자",
+                        avatar: "🔒",
+                        greetings: [
+                            "보안 담당자 Mike입니다.",
+                            "클라우드 보안을 강화하고 싶은데, AWS의 보안 서비스들에 대해 조언을 구하고 싶습니다.",
+                            "보안은 타협할 수 없는 영역이라고 생각합니다."
+                        ]
+                    },
+                    jenny_developer: {
+                        name: "Jenny",
+                        title: "풀스택 개발자",
+                        avatar: "💻",
+                        greetings: [
+                            "개발자 Jenny입니다!",
+                            "서버리스 아키텍처로 애플리케이션을 만들고 싶은데, 어떤 AWS 서비스들을 사용해야 할지 고민이에요.",
+                            "새로운 기술을 배우는 걸 좋아해서 도전해보고 싶어요!"
+                        ]
+                    }
+                };
+                
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                document.getElementById('continue-dialogue-btn').addEventListener('click', () => {
+                    this.continueDialogue();
+                });
+                
+                document.getElementById('skip-dialogue-btn').addEventListener('click', () => {
+                    this.skipDialogue();
+                });
+            }
+            
+            async startNpcDialogue(npcId) {
+                this.currentNpc = npcId;
+                const npcData = this.npcData[npcId];
+                
+                if (!npcData) {
+                    console.error('NPC data not found:', npcId);
+                    return;
+                }
+                
+                this.updateNpcDisplay(npcData);
+                document.querySelector('.npc-dialogue-area').style.display = 'block';
+                
+                await this.showGreeting(npcData);
+            }
+            
+            updateNpcDisplay(npcData) {
+                const avatarElement = document.getElementById('current-npc-avatar');
+                const nameElement = document.getElementById('current-npc-name');
+                const titleElement = document.getElementById('current-npc-title');
+                
+                avatarElement.textContent = npcData.avatar;
+                nameElement.textContent = npcData.name;
+                titleElement.textContent = npcData.title;
+            }
+            
+            async showGreeting(npcData) {
+                const greetings = npcData.greetings;
+                
+                for (let i = 0; i < greetings.length; i++) {
+                    await this.typeMessage(greetings[i]);
+                    
+                    if (i < greetings.length - 1) {
+                        await this.waitForContinue();
+                    }
+                }
+                
+                // After greeting, simulate loading question
+                setTimeout(() => {
+                    this.gameManager.loadQuestion();
+                }, 1000);
+            }
+            
+            async typeMessage(message) {
+                const dialogueText = document.getElementById('dialogue-text');
+                const continueBtn = document.getElementById('continue-dialogue-btn');
+                const skipBtn = document.getElementById('skip-dialogue-btn');
+                
+                this.isTyping = true;
+                continueBtn.style.display = 'none';
+                skipBtn.style.display = 'inline-block';
+                
+                dialogueText.textContent = '';
+                
+                for (let i = 0; i < message.length; i++) {
+                    if (!this.isTyping) break;
+                    
+                    dialogueText.textContent += message[i];
+                    await this.sleep(this.typingSpeed);
+                }
+                
+                if (!this.isTyping) {
+                    dialogueText.textContent = message;
+                }
+                
+                this.isTyping = false;
+                continueBtn.style.display = 'inline-block';
+                skipBtn.style.display = 'none';
+            }
+            
+            async waitForContinue() {
+                return new Promise((resolve) => {
+                    const continueBtn = document.getElementById('continue-dialogue-btn');
+                    
+                    const handleContinue = () => {
+                        continueBtn.removeEventListener('click', handleContinue);
+                        resolve();
+                    };
+                    
+                    continueBtn.addEventListener('click', handleContinue);
+                });
+            }
+            
+            continueDialogue() {
+                // This will be handled by the promise in waitForContinue
+            }
+            
+            skipDialogue() {
+                this.isTyping = false;
+            }
+            
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+        
+        const npcSystem = new TestNPCSystem(mockGameManager);
+        
+        function testNPC(npcId) {
+            npcSystem.startNpcDialogue(npcId);
+        }
+    </script>
+</body>
+</html>

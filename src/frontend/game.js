@@ -16,6 +16,9 @@ class GameManager {
         this.questionsAnswered = 0;
         this.correctAnswers = 0;
         
+        // Initialize NPC system
+        this.npcSystem = null;
+        
         this.init();
     }
     
@@ -30,6 +33,9 @@ class GameManager {
         this.setupEventListeners();
         this.loadUserData();
         this.showLoadingScreen();
+        
+        // Initialize NPC system
+        this.npcSystem = new NPCSystem(this);
         
         // Simulate loading time
         setTimeout(() => {
@@ -184,14 +190,16 @@ class GameManager {
             this.showGameScreen();
             this.initializeSession();
             
-            if (this.currentNpc) {
-                await this.startNpcDialogue();
+            if (this.currentNpc && this.npcSystem) {
+                await this.npcSystem.startNpcDialogue(this.currentNpc);
             } else {
                 await this.loadQuestion();
             }
         } catch (error) {
             console.error('Error starting game session:', error);
             this.showNotification('게임 세션을 시작할 수 없습니다.', 'error');
+        }
+    }
         }
     }
     
@@ -563,6 +571,81 @@ class GameManager {
     
     hideLoadingIndicator() {
         // Implementation for loading indicator
+    }
+    
+    // NPC Integration Methods
+    async requestHint() {
+        if (!this.currentQuestion) {
+            this.showNotification('문제가 로드되지 않았습니다.', 'warning');
+            return;
+        }
+        
+        if (this.hintsUsed >= 3) {
+            this.showNotification('더 이상 힌트를 사용할 수 없습니다.', 'warning');
+            return;
+        }
+        
+        try {
+            if (this.npcSystem && this.currentNpc) {
+                const hintData = await this.npcSystem.provideHint(this.currentQuestion, this.hintsUsed + 1);
+                this.hintsUsed++;
+                this.updateHintButton();
+            } else {
+                // Fallback to basic hint system
+                this.showBasicHint();
+            }
+        } catch (error) {
+            console.error('Error requesting hint:', error);
+            this.showNotification('힌트를 가져올 수 없습니다.', 'error');
+        }
+    }
+    
+    showBasicHint() {
+        const hints = [
+            "AWS의 관리형 서비스를 고려해보세요.",
+            "비용 효율성과 확장성을 동시에 고려해야 합니다.",
+            "고가용성을 위한 다중 AZ 구성을 생각해보세요."
+        ];
+        
+        const hint = hints[Math.min(this.hintsUsed, hints.length - 1)];
+        this.showNotification(hint, 'info');
+        this.hintsUsed++;
+        this.updateHintButton();
+    }
+    
+    updateHintButton() {
+        const hintBtn = document.getElementById('hint-btn');
+        const remainingHints = 3 - this.hintsUsed;
+        
+        if (remainingHints <= 0) {
+            hintBtn.disabled = true;
+            hintBtn.textContent = '힌트 없음';
+        } else {
+            hintBtn.textContent = `힌트 (${remainingHints}개 남음)`;
+        }
+    }
+    
+    async handleAnswerResult(result) {
+        if (this.npcSystem && this.currentNpc) {
+            await this.npcSystem.handleQuestionResult(result);
+        }
+        
+        // Update game statistics
+        this.questionsAnswered++;
+        if (result.isCorrect) {
+            this.correctAnswers++;
+        }
+        
+        this.updateGameStats();
+    }
+    
+    updateGameStats() {
+        const accuracy = this.questionsAnswered > 0 ? 
+            Math.round((this.correctAnswers / this.questionsAnswered) * 100) : 0;
+        
+        document.getElementById('questions-answered').textContent = this.questionsAnswered;
+        document.getElementById('correct-answers').textContent = this.correctAnswers;
+        document.getElementById('accuracy-rate').textContent = `${accuracy}%`;
     }
     
     // Data Persistence

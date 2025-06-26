@@ -378,3 +378,308 @@ body {
         padding: 1rem;
     }
 }
+
+/* NPC Dialogue System */
+.npc-dialogue-area {
+    display: none;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    animation: slideInFromTop 0.5s ease-out;
+}
+
+.npc-dialogue-area.active {
+    display: block;
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.npc-character {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.npc-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.npc-avatar-large::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* NPC Character Specific Styles */
+.npc-avatar-large.alex_ceo {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+}
+
+.npc-avatar-large.alex_ceo::after {
+    content: '👔';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+.npc-avatar-large.sarah_analyst {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+}
+
+.npc-avatar-large.sarah_analyst::after {
+    content: '📊';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+.npc-avatar-large.mike_security {
+    background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+}
+
+.npc-avatar-large.mike_security::after {
+    content: '🔒';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+.npc-avatar-large.jenny_developer {
+    background: linear-gradient(135deg, #fd79a8, #e84393);
+}
+
+.npc-avatar-large.jenny_developer::after {
+    content: '💻';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+.npc-status h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3436;
+    margin-bottom: 0.25rem;
+}
+
+.npc-status p {
+    font-size: 1rem;
+    color: #636e72;
+    font-weight: 500;
+}
+
+.dialogue-box {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+    position: relative;
+    border-left: 4px solid #667eea;
+}
+
+.dialogue-box.alex_ceo {
+    border-left-color: #ff6b6b;
+    background: linear-gradient(135deg, #fff5f5, #ffeaa7);
+}
+
+.dialogue-box.sarah_analyst {
+    border-left-color: #74b9ff;
+    background: linear-gradient(135deg, #f0f8ff, #e3f2fd);
+}
+
+.dialogue-box.mike_security {
+    border-left-color: #a29bfe;
+    background: linear-gradient(135deg, #f5f3ff, #ede7f6);
+}
+
+.dialogue-box.jenny_developer {
+    border-left-color: #fd79a8;
+    background: linear-gradient(135deg, #fff0f6, #fce4ec);
+}
+
+.dialogue-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #2d3436;
+    margin-bottom: 1.5rem;
+    min-height: 3rem;
+    position: relative;
+}
+
+.dialogue-text::after {
+    content: '';
+    display: inline-block;
+    width: 2px;
+    height: 1.2rem;
+    background: #667eea;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+    vertical-align: text-bottom;
+}
+
+.dialogue-text.typing-complete::after {
+    display: none;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+.dialogue-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.dialogue-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.dialogue-btn:not(.secondary) {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.dialogue-btn:not(.secondary):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.dialogue-btn.secondary {
+    background: rgba(255, 255, 255, 0.8);
+    color: #636e72;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dialogue-btn.secondary:hover {
+    background: white;
+    color: #2d3436;
+}
+
+.dialogue-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Typing Animation */
+.typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #667eea;
+    animation: typingDot 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typingDot {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Mobile Responsive for Dialogue */
+@media (max-width: 768px) {
+    .npc-dialogue-area {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .npc-character {
+        gap: 1rem;
+    }
+    
+    .npc-avatar-large {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .npc-avatar-large.alex_ceo::after,
+    .npc-avatar-large.sarah_analyst::after,
+    .npc-avatar-large.mike_security::after,
+    .npc-avatar-large.jenny_developer::after {
+        font-size: 1.5rem;
+    }
+    
+    .npc-status h3 {
+        font-size: 1.25rem;
+    }
+    
+    .dialogue-box {
+        padding: 1rem;
+    }
+    
+    .dialogue-text {
+        font-size: 1rem;
+    }
+    
+    .dialogue-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .dialogue-btn {
+        width: 100%;
+        padding: 1rem;
+    }
+}
