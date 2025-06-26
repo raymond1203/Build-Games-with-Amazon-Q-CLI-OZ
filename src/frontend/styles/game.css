@@ -2219,3 +2219,552 @@ body {
         padding: 0.5rem 0;
     }
 }
+/* AWS Advisor System Styles */
+
+/* Advisor Button */
+.advisor-btn {
+    background: linear-gradient(135deg, #ff9500, #ff6b35);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-right: 1rem;
+    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
+}
+
+.advisor-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 149, 0, 0.4);
+}
+
+/* AWS Advisor Modal */
+.aws-advisor-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.aws-advisor-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.aws-advisor-content {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 900px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.aws-advisor-modal.show .aws-advisor-content {
+    transform: scale(1);
+}
+
+.advisor-header {
+    background: linear-gradient(135deg, #ff9500, #ff6b35);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.advisor-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.advisor-title i {
+    font-size: 2rem;
+}
+
+.advisor-title h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Advisor Tabs */
+.advisor-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.advisor-tab {
+    flex: 1;
+    padding: 1rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: #636e72;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.advisor-tab:hover {
+    background: rgba(255, 149, 0, 0.1);
+    color: #ff9500;
+}
+
+.advisor-tab.active {
+    color: #ff9500;
+    border-bottom-color: #ff9500;
+    background: white;
+}
+
+/* Content Area */
+.advisor-content-area {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+}
+
+.advisor-tab-content {
+    display: none;
+    padding: 2rem;
+    height: 100%;
+}
+
+.advisor-tab-content.active {
+    display: block;
+}
+
+/* Service Search */
+.service-search,
+.faq-search {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.service-search input,
+.faq-search input {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.service-search input:focus,
+.faq-search input:focus {
+    border-color: #ff9500;
+}
+
+.search-btn {
+    background: linear-gradient(135deg, #ff9500, #ff6b35);
+    color: white;
+    border: none;
+    padding: 1rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 149, 0, 0.3);
+}
+
+/* Service Categories */
+.service-categories h4,
+.popular-services h4,
+.faq-categories h4,
+.best-practices-content h4,
+.troubleshooting-content h4 {
+    color: #2d3436;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.category-item {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.category-item:hover {
+    background: #e9ecef;
+    border-color: #ff9500;
+    transform: translateY(-2px);
+}
+
+.category-item h5 {
+    color: #2d3436;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.service-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.service-tag {
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.service-tag:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+}
+
+.more-services {
+    color: #636e72;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Service Grid */
+.service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.service-card {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.service-card:hover {
+    border-color: #ff9500;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(255, 149, 0, 0.1);
+}
+
+.service-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #ff9500, #ff6b35);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.service-card h5 {
+    color: #2d3436;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.service-card p {
+    color: #636e72;
+    font-size: 0.9rem;
+}
+
+/* FAQ List */
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.faq-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 2px solid transparent;
+}
+
+.faq-item:hover {
+    background: #e9ecef;
+    border-color: #ff9500;
+    transform: translateX(5px);
+}
+
+.faq-item i {
+    color: #ff9500;
+    font-size: 1.2rem;
+}
+
+.faq-item span {
+    color: #2d3436;
+    font-weight: 500;
+}
+
+/* Best Practices */
+.best-practice-section {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #ff9500;
+}
+
+.best-practice-section h5 {
+    color: #2d3436;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.best-practice-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.best-practice-section li {
+    color: #636e72;
+    padding: 0.5rem 0;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.best-practice-section li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #00b894;
+    font-weight: 700;
+}
+
+/* Troubleshooting */
+.troubleshooting-section {
+    background: #fff5f5;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #e17055;
+}
+
+.troubleshooting-section h5 {
+    color: #d63031;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.solution-list {
+    list-style: none;
+    padding: 0;
+}
+
+.solution-list li {
+    color: #636e72;
+    padding: 0.5rem 0;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.solution-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #e17055;
+    font-weight: 700;
+}
+
+/* Result Area */
+.advisor-result {
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    max-height: 40%;
+    overflow-y: auto;
+}
+
+.result-header {
+    background: white;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.result-header h3 {
+    color: #2d3436;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.clear-result-btn {
+    background: none;
+    border: none;
+    color: #636e72;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.clear-result-btn:hover {
+    background: #e9ecef;
+    color: #2d3436;
+}
+
+.result-content {
+    padding: 2rem;
+    line-height: 1.6;
+}
+
+.result-content h4,
+.result-content h5 {
+    color: #2d3436;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.result-content ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.result-content li {
+    margin: 0.5rem 0;
+    color: #636e72;
+}
+
+/* Loading Content */
+.loading-content {
+    text-align: center;
+    padding: 2rem;
+}
+
+.loading-content .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e9ecef;
+    border-top: 4px solid #ff9500;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.loading-content p {
+    color: #636e72;
+    font-size: 1.1rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .aws-advisor-content {
+        width: 95%;
+        height: 90vh;
+        margin: 1rem;
+    }
+    
+    .advisor-header {
+        padding: 1rem;
+    }
+    
+    .advisor-title h2 {
+        font-size: 1.4rem;
+    }
+    
+    .advisor-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .advisor-tab {
+        flex: 1;
+        min-width: 50%;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .advisor-tab-content {
+        padding: 1rem;
+    }
+    
+    .category-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .service-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .service-card {
+        padding: 1rem;
+    }
+    
+    .service-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .result-header {
+        padding: 1rem;
+    }
+    
+    .result-content {
+        padding: 1rem;
+    }
+}

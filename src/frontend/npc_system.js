@@ -306,14 +306,16 @@ class NPCSystem {
             document.querySelector('.npc-dialogue-area').style.display = 'block';
             
             const requestData = {
-                action: 'get_npc_hint',
+                action: 'get_hint',
                 sessionId: this.gameManager.currentSession?.id || 'temp_session',
                 questionData: {
                     questionId: questionData.questionId,
                     category: questionData.category,
                     difficulty: questionData.difficulty,
-                    scenario: questionData.scenario
+                    scenario: questionData.scenario,
+                    question: questionData.question
                 },
+                npcId: this.currentNpc,
                 hintLevel: hintLevel
             };
             
@@ -339,9 +341,9 @@ class NPCSystem {
         } catch (error) {
             console.error('Error requesting NPC hint:', error);
             
-            // Fallback to local hint
+            // Fallback to enhanced local hint
             const npcData = this.npcData[this.currentNpc];
-            const fallbackHint = this.generateFallbackHint(questionData, npcData, hintLevel);
+            const fallbackHint = this.generateEnhancedFallbackHint(questionData, npcData, hintLevel);
             await this.showNpcHint(fallbackHint);
             
             return fallbackHint;
@@ -357,23 +359,165 @@ class NPCSystem {
         this.hideDialogueArea();
     }
     
-    generateFallbackHint(questionData, npcData, hintLevel) {
-        const baseHints = [
-            "이 문제의 핵심은 확장성과 비용 효율성을 동시에 고려하는 것입니다.",
-            "AWS의 관리형 서비스를 활용하면 운영 부담을 줄일 수 있어요.",
-            "고가용성과 내결함성을 위한 AWS 서비스들을 생각해보세요."
-        ];
+    generateEnhancedFallbackHint(questionData, npcData, hintLevel) {
+        const category = questionData.category?.toUpperCase() || 'GENERAL';
         
-        const baseHint = baseHints[Math.min(hintLevel - 1, baseHints.length - 1)];
-        const hintStyle = this.getRandomItem(npcData.hintStyles);
-        const personalizedHint = hintStyle.replace('{hint}', baseHint);
+        // 카테고리별 상세 힌트 템플릿
+        const enhancedHintTemplates = {
+            'EC2': {
+                1: {
+                    base: "인스턴스 확장성과 로드 밸런싱을 고려해보세요.",
+                    alex_ceo: "트래픽 급증에 대비한 확장 가능한 솔루션이 필요해요!",
+                    sarah_analyst: "데이터를 보니 Auto Scaling이 가장 효율적일 것 같아요.",
+                    mike_security: "보안을 유지하면서 확장할 수 있는 방법을 찾아보세요.",
+                    jenny_developer: "서버 관리 없이 자동으로 확장되는 방법이 있어요!"
+                },
+                2: {
+                    base: "Auto Scaling Group과 Application Load Balancer 조합을 생각해보세요.",
+                    alex_ceo: "ALB와 ASG로 비용 효율적인 확장이 가능해요!",
+                    sarah_analyst: "로드 밸런서 메트릭을 분석하면 최적의 설정을 찾을 수 있어요.",
+                    mike_security: "보안 그룹과 함께 안전한 로드 밸런싱을 구성해보세요.",
+                    jenny_developer: "코드 배포도 자동화할 수 있는 완벽한 조합이에요!"
+                },
+                3: {
+                    base: "다중 AZ 배포와 CloudWatch 모니터링을 포함한 완전한 아키텍처를 설계해보세요.",
+                    alex_ceo: "투자자들이 좋아할 고가용성 아키텍처를 만들어봅시다!",
+                    sarah_analyst: "CloudWatch 대시보드로 모든 지표를 한눈에 볼 수 있어요.",
+                    mike_security: "다중 AZ로 장애 복구와 보안을 동시에 확보하세요.",
+                    jenny_developer: "Infrastructure as Code로 전체 스택을 관리해보세요!"
+                }
+            },
+            'S3': {
+                1: {
+                    base: "스토리지 클래스와 액세스 패턴을 고려해보세요.",
+                    alex_ceo: "비용 최적화를 위한 스토리지 전략이 중요해요!",
+                    sarah_analyst: "액세스 패턴을 분석해서 적절한 클래스를 선택하세요.",
+                    mike_security: "데이터 암호화와 접근 제어를 잊지 마세요.",
+                    jenny_developer: "라이프사이클 정책으로 자동화해보세요!"
+                },
+                2: {
+                    base: "Standard-IA, Glacier 등 적절한 스토리지 클래스를 선택해보세요.",
+                    alex_ceo: "Standard-IA로 비용을 70% 절약할 수 있어요!",
+                    sarah_analyst: "데이터 액세스 빈도에 따라 클래스를 분류해보세요.",
+                    mike_security: "Glacier로 장기 보관하면서 규제 요구사항도 만족해요.",
+                    jenny_developer: "Intelligent Tiering으로 자동 최적화가 가능해요!"
+                },
+                3: {
+                    base: "라이프사이클 정책과 버전 관리를 포함한 완전한 스토리지 전략을 수립해보세요.",
+                    alex_ceo: "완전 자동화된 스토리지 관리로 운영비를 대폭 절감해요!",
+                    sarah_analyst: "버전 관리와 메트릭 분석으로 완벽한 데이터 거버넌스를 구축하세요.",
+                    mike_security: "MFA Delete와 Cross-Region Replication으로 최고 수준의 보안을 확보하세요.",
+                    jenny_developer: "S3 이벤트와 Lambda로 완전 자동화된 워크플로우를 만들어보세요!"
+                }
+            },
+            'LAMBDA': {
+                1: {
+                    base: "서버리스 아키텍처와 이벤트 기반 처리를 고려해보세요.",
+                    alex_ceo: "서버 관리 비용을 완전히 없앨 수 있어요!",
+                    sarah_analyst: "이벤트 기반으로 정확한 데이터 처리가 가능해요.",
+                    mike_security: "서버리스로 공격 표면을 최소화할 수 있어요.",
+                    jenny_developer: "코드만 작성하면 나머지는 AWS가 알아서 해줘요!"
+                },
+                2: {
+                    base: "Lambda와 API Gateway, DynamoDB 조합을 생각해보세요.",
+                    alex_ceo: "완전 서버리스 스택으로 운영비 제로를 달성해요!",
+                    sarah_analyst: "DynamoDB 스트림으로 실시간 데이터 분석이 가능해요.",
+                    mike_security: "IAM 역할로 세밀한 권한 제어가 가능해요.",
+                    jenny_developer: "SAM이나 CDK로 전체 스택을 코드로 관리해보세요!"
+                },
+                3: {
+                    base: "Step Functions를 활용한 워크플로우 오케스트레이션을 포함해보세요.",
+                    alex_ceo: "복잡한 비즈니스 로직도 시각적으로 관리할 수 있어요!",
+                    sarah_analyst: "Step Functions으로 데이터 파이프라인을 체계적으로 구성하세요.",
+                    mike_security: "각 단계별로 보안 검증을 추가할 수 있어요.",
+                    jenny_developer: "에러 처리와 재시도 로직까지 완벽하게 자동화해보세요!"
+                }
+            },
+            'RDS': {
+                1: {
+                    base: "데이터베이스 가용성과 백업 전략을 고려해보세요.",
+                    alex_ceo: "데이터베이스 다운타임은 비즈니스에 치명적이에요!",
+                    sarah_analyst: "백업과 복구 시간을 정확히 계산해보세요.",
+                    mike_security: "데이터 암호화와 접근 제어가 필수예요.",
+                    jenny_developer: "자동 백업으로 관리 부담을 줄여보세요!"
+                },
+                2: {
+                    base: "Multi-AZ 배포와 Read Replica를 생각해보세요.",
+                    alex_ceo: "Multi-AZ로 99.95% 가용성을 보장할 수 있어요!",
+                    sarah_analyst: "Read Replica로 읽기 성능을 5배까지 향상시킬 수 있어요.",
+                    mike_security: "암호화된 Read Replica로 보안과 성능을 동시에 확보하세요.",
+                    jenny_developer: "Aurora Serverless로 자동 스케일링까지 가능해요!"
+                },
+                3: {
+                    base: "자동 백업, 모니터링, 성능 최적화를 포함한 완전한 DB 솔루션을 설계해보세요.",
+                    alex_ceo: "완전 자동화된 DB 관리로 DBA 비용까지 절약해요!",
+                    sarah_analyst: "Performance Insights로 쿼리 성능을 실시간 분석하세요.",
+                    mike_security: "Database Activity Streaming으로 모든 DB 활동을 감시하세요.",
+                    jenny_developer: "RDS Proxy와 Lambda로 연결 풀링까지 자동화해보세요!"
+                }
+            },
+            'VPC': {
+                1: {
+                    base: "네트워크 보안과 서브넷 구성을 고려해보세요.",
+                    alex_ceo: "네트워크 설계가 전체 아키텍처의 기반이에요!",
+                    sarah_analyst: "트래픽 패턴을 분석해서 서브넷을 설계하세요.",
+                    mike_security: "네트워크 레벨에서부터 보안을 강화해야 해요.",
+                    jenny_developer: "Infrastructure as Code로 네트워크를 관리해보세요!"
+                },
+                2: {
+                    base: "퍼블릭/프라이빗 서브넷과 NAT Gateway를 생각해보세요.",
+                    alex_ceo: "NAT Gateway로 아웃바운드 트래픽을 안전하게 관리해요!",
+                    sarah_analyst: "서브넷별 트래픽 분석으로 최적의 구성을 찾으세요.",
+                    mike_security: "프라이빗 서브넷으로 내부 리소스를 완전히 격리하세요.",
+                    jenny_developer: "Terraform으로 전체 네트워크 인프라를 코드화해보세요!"
+                },
+                3: {
+                    base: "보안 그룹, NACL, VPC 엔드포인트를 포함한 완전한 네트워크 아키텍처를 설계해보세요.",
+                    alex_ceo: "엔터프라이즈급 네트워크 보안으로 고객 신뢰를 확보해요!",
+                    sarah_analyst: "VPC Flow Logs로 모든 네트워크 트래픽을 분석하세요.",
+                    mike_security: "다층 보안으로 제로 트러스트 네트워크를 구축하세요.",
+                    jenny_developer: "VPC 엔드포인트로 AWS 서비스 통신을 완전히 프라이빗하게 만들어보세요!"
+                }
+            }
+        };
+        
+        // 기본 힌트 (카테고리가 없거나 매칭되지 않는 경우)
+        const defaultHints = {
+            1: {
+                base: "AWS의 관리형 서비스를 활용해보세요.",
+                alex_ceo: "관리형 서비스로 운영 비용을 대폭 절감할 수 있어요!",
+                sarah_analyst: "관리형 서비스의 성능 지표를 분석해보세요.",
+                mike_security: "AWS 관리형 서비스는 보안 패치가 자동으로 적용돼요.",
+                jenny_developer: "관리형 서비스로 개발에만 집중할 수 있어요!"
+            },
+            2: {
+                base: "고가용성과 비용 효율성을 동시에 고려해보세요.",
+                alex_ceo: "고가용성으로 비즈니스 연속성을 보장하면서 비용도 최적화해요!",
+                sarah_analyst: "가용성 지표와 비용 분석을 통해 최적점을 찾으세요.",
+                mike_security: "고가용성 구성에서도 보안 요구사항을 만족해야 해요.",
+                jenny_developer: "자동화로 고가용성과 비용 효율성을 동시에 달성해보세요!"
+            },
+            3: {
+                base: "모니터링과 자동화를 포함한 완전한 솔루션을 설계해보세요.",
+                alex_ceo: "완전 자동화로 운영팀 없이도 안정적인 서비스를 만들어요!",
+                sarah_analyst: "종합적인 모니터링 대시보드로 모든 지표를 추적하세요.",
+                mike_security: "자동화된 보안 모니터링과 대응 체계를 구축하세요.",
+                jenny_developer: "GitOps와 CI/CD로 완전 자동화된 배포 파이프라인을 만들어보세요!"
+            }
+        };
+        
+        // 힌트 선택
+        const categoryHints = enhancedHintTemplates[category] || defaultHints;
+        const levelHints = categoryHints[hintLevel] || defaultHints[hintLevel];
+        const npcSpecificHint = levelHints[this.currentNpc] || levelHints.base;
         
         return {
-            hint: baseHint,
-            message: personalizedHint,
+            hint: levelHints.base,
+            message: npcSpecificHint,
             hintLevel: hintLevel,
-            source: 'fallback',
-            npcId: this.currentNpc
+            source: 'enhanced_fallback',
+            npcId: this.currentNpc,
+            category: category
         };
     }
     

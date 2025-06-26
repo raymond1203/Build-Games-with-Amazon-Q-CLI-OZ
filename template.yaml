@@ -1,0 +1,227 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Problem Solver Game - Amazon Q CLI Integration
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.9
+    Environment:
+      Variables:
+        PYTHONPATH: /var/runtime
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: Environment name
+
+Resources:
+  # API Gateway
+  GameAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: AWS Problem Solver Game API
+          version: '1.0'
+        paths:
+          /hints:
+            post:
+              x-amazon-apigateway-integration:
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HintProviderFunction.Arn}/invocations'
+                httpMethod: POST
+                type: aws_proxy
+              responses:
+                '200':
+                  description: Success
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+            options:
+              x-amazon-apigateway-integration:
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HintProviderFunction.Arn}/invocations'
+                httpMethod: POST
+                type: aws_proxy
+              responses:
+                '200':
+                  description: Success
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+
+  # Lambda Functions
+  HintProviderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'aws-game-hint-provider-${Environment}'
+      CodeUri: src/lambda_functions/
+      Handler: hint_provider.lambda_handler
+      Description: Amazon Q CLI를 활용한 힌트 제공 시스템
+      MemorySize: 512
+      Timeout: 30
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+      Events:
+        HintAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GameAPI
+            Path: /hints
+            Method: post
+        HintAPIOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GameAPI
+            Path: /hints
+            Method: options
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+
+  # DynamoDB Tables (for future use)
+  GameDataTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'aws-game-data-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Project
+          Value: AWS-Problem-Solver-Game
+        - Key: Environment
+          Value: !Ref Environment
+
+  # S3 Bucket for static assets
+  GameAssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'aws-game-assets-${Environment}-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - HEAD
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3600
+
+  # S3 Bucket Policy
+  GameAssetsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref GameAssetsBucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub '${GameAssetsBucket}/*'
+
+  # CloudFront Distribution
+  GameCDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt GameAssetsBucket.RegionalDomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        Enabled: true
+        DefaultRootObject: index.html
+        Comment: !Sub 'AWS Problem Solver Game CDN - ${Environment}'
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+          MinTTL: 0
+          DefaultTTL: 86400
+          MaxTTL: 31536000
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+Outputs:
+  GameAPIUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${GameAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AWS::StackName}-GameAPIUrl'
+
+  HintProviderFunctionArn:
+    Description: Hint Provider Lambda Function ARN
+    Value: !GetAtt HintProviderFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-HintProviderFunctionArn'
+
+  GameAssetsBucketName:
+    Description: S3 Bucket for game assets
+    Value: !Ref GameAssetsBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-GameAssetsBucketName'
+
+  GameCDNUrl:
+    Description: CloudFront distribution URL
+    Value: !GetAtt GameCDN.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-GameCDNUrl'
+
+  DynamoDBTableName:
+    Description: DynamoDB table name
+    Value: !Ref GameDataTable
+    Export:
+      Name: !Sub '${AWS::StackName}-DynamoDBTableName'

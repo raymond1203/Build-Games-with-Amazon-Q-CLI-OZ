@@ -23,6 +23,9 @@ class GameManager {
         // Initialize Level system
         this.levelSystem = null;
         
+        // Initialize AWS Advisor
+        this.awsAdvisor = null;
+        
         this.init();
     }
     
@@ -43,6 +46,12 @@ class GameManager {
         
         // Initialize Level system
         this.levelSystem = new LevelSystem(this);
+        
+        // Initialize AWS Advisor
+        this.awsAdvisor = new AWSAdvisor(this);
+        
+        // Initialize AWS Advisor
+        this.awsAdvisor = new AWSAdvisor(this);
         
         // Simulate loading time
         setTimeout(() => {

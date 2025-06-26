@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Q CLI Integration Test</title>
+    <link rel="stylesheet" href="src/frontend/styles/game.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .test-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .test-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .test-btn.aws {
+            background: linear-gradient(135deg, #ff9500, #ff6b35);
+        }
+        .test-btn.npc {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+        }
+        .mock-game-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .mock-question {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+        }
+        .mock-npc {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .npc-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+            color: white;
+        }
+        .test-result {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .test-result.show {
+            display: block;
+        }
+        .test-result.error {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+        .log-area {
+            background: #2d3436;
+            color: #00b894;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1><i class="fab fa-aws"></i> Amazon Q CLI Integration Test</h1>
+            <p>Amazon Q CLI 힌트 시스템 및 AWS 조언자 테스트</p>
+        </div>
+        
+        <!-- Mock Game Header -->
+        <div class="test-section">
+            <div class="mock-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div class="logo">
+                    <i class="fab fa-aws"></i>
+                    <span>AWS Problem Solver</span>
+                </div>
+                
+                <div class="user-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-trophy"></i>
+                        <span>1,250</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-star"></i>
+                        <span>5</span>
+                    </div>
+                </div>
+                
+                <button class="advisor-btn" onclick="showAWSAdvisor()" title="AWS 조언자">
+                    <i class="fab fa-aws"></i>
+                </button>
+            </div>
+            
+            <div class="mock-game-area">
+                <div class="mock-question">
+                    <h4>현재 문제</h4>
+                    <div class="question-meta" style="margin-bottom: 1rem;">
+                        <span class="question-category">EC2</span>
+                        <span class="question-difficulty medium">Medium</span>
+                    </div>
+                    <p><strong>시나리오:</strong> 웹 애플리케이션의 트래픽이 급증하여 단일 EC2 인스턴스의 CPU 사용률이 90%를 넘고 있습니다.</p>
+                    <p><strong>문제:</strong> 이 상황에서 가장 적절한 AWS 솔루션은 무엇입니까?</p>
+                </div>
+                
+                <div class="mock-npc">
+                    <div class="npc-avatar">👔</div>
+                    <h4>Alex (스타트업 CEO)</h4>
+                    <p>빠른 해결책이 필요해요!</p>
+                    <button class="test-btn npc" onclick="requestNPCHint()">NPC 힌트 요청</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Controls -->
+        <div class="test-section">
+            <h3>테스트 기능</h3>
+            <div class="test-controls">
+                <button class="test-btn aws" onclick="testAWSServiceExplanation()">
+                    <i class="fab fa-aws"></i> AWS 서비스 설명 테스트
+                </button>
+                <button class="test-btn npc" onclick="testNPCHintSystem()">
+                    <i class="fas fa-user-tie"></i> NPC 힌트 시스템 테스트
+                </button>
+                <button class="test-btn" onclick="testFallbackSystem()">
+                    <i class="fas fa-shield-alt"></i> 대체 시스템 테스트
+                </button>
+                <button class="test-btn aws" onclick="showAWSAdvisor()">
+                    <i class="fas fa-question-circle"></i> AWS 조언자 열기
+                </button>
+                <button class="test-btn" onclick="testAPIConnection()">
+                    <i class="fas fa-plug"></i> API 연결 테스트
+                </button>
+                <button class="test-btn" onclick="clearLogs()">
+                    <i class="fas fa-trash"></i> 로그 지우기
+                </button>
+            </div>
+            
+            <div class="test-result" id="test-result">
+                <h4>테스트 결과</h4>
+                <div id="result-content"></div>
+            </div>
+            
+            <div class="log-area" id="log-area">
+                <div>Amazon Q CLI Integration Test Console</div>
+                <div>Ready for testing...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/frontend/level_system.js"></script>
+    <script src="src/frontend/npc_system.js"></script>
+    <script src="src/frontend/aws_advisor.js"></script>
+    
+    <script>
+        // Mock GameManager for testing
+        class MockGameManager {
+            constructor() {
+                this.apiBaseUrl = 'https://your-api-gateway-url/dev'; // 실제 API Gateway URL로 변경
+                this.currentUser = { username: 'TestUser' };
+                this.currentSession = { id: 'test_session_123' };
+                this.currentQuestion = {
+                    questionId: 'q001',
+                    category: 'EC2',
+                    difficulty: 'medium',
+                    scenario: {
+                        title: '웹 애플리케이션 확장성 문제',
+                        description: '웹 애플리케이션의 트래픽이 급증하여 단일 EC2 인스턴스의 CPU 사용률이 90%를 넘고 있습니다.',
+                        context: '현재 단일 EC2 인스턴스에서 실행 중이며, 피크 시간대에 응답 시간이 느려지고 있습니다.'
+                    },
+                    question: '이 상황에서 가장 적절한 AWS 솔루션은 무엇입니까?'
+                };
+            }
+            
+            showNotification(message, type) {
+                logMessage(`NOTIFICATION [${type.toUpperCase()}]: ${message}`);
+                showTestResult(message, type === 'error');
+            }
+        }
+        
+        // Initialize test environment
+        const mockGameManager = new MockGameManager();
+        const npcSystem = new NPCSystem(mockGameManager);
+        const awsAdvisor = new AWSAdvisor(mockGameManager);
+        
+        // Test functions
+        async function testAWSServiceExplanation() {
+            logMessage('Testing AWS Service Explanation...');
+            
+            try {
+                const explanation = await awsAdvisor.getServiceExplanation('EC2');
+                logMessage('✅ AWS Service Explanation successful');
+                showTestResult('AWS 서비스 설명 테스트 성공!', false);
+                logMessage(`Explanation: ${explanation.substring(0, 100)}...`);
+            } catch (error) {
+                logMessage('❌ AWS Service Explanation failed: ' + error.message);
+                showTestResult('AWS 서비스 설명 테스트 실패: ' + error.message, true);
+            }
+        }
+        
+        async function testNPCHintSystem() {
+            logMessage('Testing NPC Hint System...');
+            
+            try {
+                // Set current NPC
+                npcSystem.currentNpc = 'alex_ceo';
+                
+                const hintResult = await npcSystem.requestNpcHint(mockGameManager.currentQuestion, 1);
+                logMessage('✅ NPC Hint System successful');
+                showTestResult('NPC 힌트 시스템 테스트 성공!', false);
+                logMessage(`Hint: ${hintResult.message || hintResult.hint}`);
+            } catch (error) {
+                logMessage('❌ NPC Hint System failed: ' + error.message);
+                showTestResult('NPC 힌트 시스템 테스트 실패: ' + error.message, true);
+            }
+        }
+        
+        function testFallbackSystem() {
+            logMessage('Testing Fallback System...');
+            
+            try {
+                npcSystem.currentNpc = 'alex_ceo';
+                const fallbackHint = npcSystem.generateEnhancedFallbackHint(
+                    mockGameManager.currentQuestion, 
+                    npcSystem.npcData['alex_ceo'], 
+                    1
+                );
+                
+                logMessage('✅ Fallback System successful');
+                showTestResult('대체 시스템 테스트 성공!', false);
+                logMessage(`Fallback Hint: ${fallbackHint.message}`);
+            } catch (error) {
+                logMessage('❌ Fallback System failed: ' + error.message);
+                showTestResult('대체 시스템 테스트 실패: ' + error.message, true);
+            }
+        }
+        
+        function showAWSAdvisor() {
+            logMessage('Opening AWS Advisor...');
+            awsAdvisor.showAdvisorModal();
+        }
+        
+        async function requestNPCHint() {
+            logMessage('Requesting NPC Hint...');
+            await testNPCHintSystem();
+        }
+        
+        async function testAPIConnection() {
+            logMessage('Testing API Connection...');
+            
+            try {
+                const testData = {
+                    action: 'get_hint',
+                    questionData: mockGameManager.currentQuestion,
+                    npcId: 'alex_ceo',
+                    hintLevel: 1
+                };
+                
+                const response = await fetch(`${mockGameManager.apiBaseUrl}/hints`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    logMessage('✅ API Connection successful');
+                    showTestResult('API 연결 테스트 성공!', false);
+                    logMessage(`API Response: ${JSON.stringify(result).substring(0, 100)}...`);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                logMessage('❌ API Connection failed: ' + error.message);
+                showTestResult('API 연결 테스트 실패: ' + error.message, true);
+                logMessage('Note: API Gateway URL을 실제 엔드포인트로 변경해주세요.');
+            }
+        }
+        
+        function logMessage(message) {
+            const logArea = document.getElementById('log-area');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logArea.appendChild(logEntry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        function showTestResult(message, isError) {
+            const resultDiv = document.getElementById('test-result');
+            const contentDiv = document.getElementById('result-content');
+            
+            resultDiv.className = `test-result show ${isError ? 'error' : ''}`;
+            contentDiv.textContent = message;
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                resultDiv.classList.remove('show');
+            }, 5000);
+        }
+        
+        function clearLogs() {
+            const logArea = document.getElementById('log-area');
+            logArea.innerHTML = `
+                <div>Amazon Q CLI Integration Test Console</div>
+                <div>Logs cleared...</div>
+            `;
+        }
+        
+        // Initialize test environment
+        logMessage('Test environment initialized');
+        logMessage('Available NPCs: ' + Object.keys(npcSystem.npcData).join(', '));
+        logMessage('Current API Base URL: ' + mockGameManager.apiBaseUrl);
+        logMessage('Ready for testing!');
+        
+        // Test instructions
+        setTimeout(() => {
+            logMessage('');
+            logMessage('=== TEST INSTRUCTIONS ===');
+            logMessage('1. AWS 서비스 설명 테스트: AWS 서비스에 대한 설명 기능 테스트');
+            logMessage('2. NPC 힌트 시스템 테스트: NPC별 개성있는 힌트 제공 테스트');
+            logMessage('3. 대체 시스템 테스트: Amazon Q CLI 사용 불가시 대체 시스템 테스트');
+            logMessage('4. AWS 조언자 열기: 전체 AWS 조언자 모달 테스트');
+            logMessage('5. API 연결 테스트: 실제 Lambda 함수와의 연결 테스트');
+            logMessage('');
+            logMessage('Note: API 연결 테스트를 위해서는 실제 API Gateway URL이 필요합니다.');
+        }, 1000);
+    </script>
+</body>
+</html>
