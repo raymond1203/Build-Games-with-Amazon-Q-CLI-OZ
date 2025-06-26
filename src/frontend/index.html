@@ -43,7 +43,7 @@
             </div>
             
             <div class="header-right">
-                <div class="user-stats">
+                <div class="user-stats" onclick="gameManager.showUserProfile()" title="프로필 보기">
                     <div class="stat-item">
                         <i class="fas fa-trophy"></i>
                         <span id="user-score">0</span>
@@ -411,8 +411,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="game.js"></script>
+    <script src="level_system.js"></script>
     <script src="npc_system.js"></script>
+    <script src="game.js"></script>
     <script src="ui_components.js"></script>
 </body>
 </html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level System Test</title>
+    <link rel="stylesheet" href="src/frontend/styles/game.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .test-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .test-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .test-btn.secondary {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+        }
+        .test-btn.danger {
+            background: linear-gradient(135deg, #e17055, #d63031);
+        }
+        .mock-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mock-progress {
+            flex: 1;
+            margin: 0 2rem;
+        }
+        .test-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .info-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .info-item h4 {
+            margin: 0 0 0.5rem 0;
+            color: #2d3436;
+        }
+        .info-item p {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>AWS Problem Solver - Level System Test</h1>
+            <p>레벨 시스템, 성취 배지, 사용자 프로필 테스트</p>
+        </div>
+        
+        <!-- Mock Game Header -->
+        <div class="mock-header">
+            <div class="logo">
+                <i class="fab fa-aws"></i>
+                <span>AWS Problem Solver</span>
+            </div>
+            
+            <div class="mock-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    <span class="progress-text" id="progress-text">0/100 EXP</span>
+                </div>
+            </div>
+            
+            <div class="user-stats" onclick="showUserProfile()" title="프로필 보기">
+                <div class="stat-item">
+                    <i class="fas fa-trophy"></i>
+                    <span id="user-score">0</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-star"></i>
+                    <span id="user-level">1</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-target"></i>
+                    <span id="user-accuracy">0%</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Controls -->
+        <div class="test-controls">
+            <button class="test-btn" onclick="addScore(50, true)">정답 (+50점)</button>
+            <button class="test-btn" onclick="addScore(100, true)">완벽한 정답 (+100점)</button>
+            <button class="test-btn" onclick="addScore(200, true)">고난이도 정답 (+200점)</button>
+            <button class="test-btn secondary" onclick="addScore(0, false)">오답 (연속 초기화)</button>
+            <button class="test-btn secondary" onclick="showAchievements()">성취 배지 보기</button>
+            <button class="test-btn secondary" onclick="showUserProfile()">사용자 프로필</button>
+            <button class="test-btn secondary" onclick="simulateGameSession()">게임 세션 시뮬레이션</button>
+            <button class="test-btn danger" onclick="resetProgress()">진행률 초기화</button>
+        </div>
+        
+        <!-- Current Status -->
+        <div class="test-info">
+            <h3>현재 상태</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>현재 레벨</h4>
+                    <p id="current-level">1</p>
+                </div>
+                <div class="info-item">
+                    <h4>총 경험치</h4>
+                    <p id="current-exp">0</p>
+                </div>
+                <div class="info-item">
+                    <h4>총 점수</h4>
+                    <p id="total-score">0</p>
+                </div>
+                <div class="info-item">
+                    <h4>연속 정답</h4>
+                    <p id="current-streak">0</p>
+                </div>
+                <div class="info-item">
+                    <h4>최대 연속</h4>
+                    <p id="max-streak">0</p>
+                </div>
+                <div class="info-item">
+                    <h4>성취 배지</h4>
+                    <p id="achievement-count">0</p>
+                </div>
+                <div class="info-item">
+                    <h4>현재 타이틀</h4>
+                    <p id="current-title">AWS 입문자</p>
+                </div>
+                <div class="info-item">
+                    <h4>다음 레벨까지</h4>
+                    <p id="exp-to-next">100 EXP</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/frontend/level_system.js"></script>
+    
+    <script>
+        // Mock GameManager for testing
+        class MockGameManager {
+            constructor() {
+                this.currentUser = { username: 'TestUser' };
+                this.questionsAnswered = 0;
+                this.correctAnswers = 0;
+            }
+            
+            showNotification(message, type) {
+                alert(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+        
+        // Initialize test environment
+        const mockGameManager = new MockGameManager();
+        const levelSystem = new LevelSystem(mockGameManager);
+        
+        // Test functions
+        function addScore(score, isCorrect) {
+            const questionResult = {
+                isCorrect: isCorrect,
+                totalScore: score,
+                timeBonus: isCorrect ? Math.floor(Math.random() * 30) : 0,
+                hintPenalty: Math.floor(Math.random() * 20)
+            };
+            
+            mockGameManager.questionsAnswered++;
+            if (isCorrect) {
+                mockGameManager.correctAnswers++;
+            }
+            
+            const result = levelSystem.addScore(score, questionResult);
+            updateDisplay();
+            
+            if (result.leveledUp) {
+                console.log(`Level up! New level: ${result.newLevel}`);
+            }
+        }
+        
+        function showAchievements() {
+            showAchievementGallery();
+        }
+        
+        function showUserProfile() {
+            showUserProfileModal();
+        }
+        
+        function simulateGameSession() {
+            // Simulate a game session with random results
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const isCorrect = Math.random() > 0.3; // 70% correct rate
+                    const score = isCorrect ? (50 + Math.floor(Math.random() * 100)) : 0;
+                    addScore(score, isCorrect);
+                }, i * 500);
+            }
+        }
+        
+        function resetProgress() {
+            if (confirm('정말로 모든 진행률을 초기화하시겠습니까?')) {
+                levelSystem.resetProgress();
+                mockGameManager.questionsAnswered = 0;
+                mockGameManager.correctAnswers = 0;
+                updateDisplay();
+            }
+        }
+        
+        function updateDisplay() {
+            const stats = levelSystem.getPlayerStats();
+            const title = levelSystem.getCurrentTitle();
+            const progress = levelSystem.getExpProgress();
+            
+            // Update header stats
+            document.getElementById('user-score').textContent = levelSystem.totalScore.toLocaleString();
+            document.getElementById('user-level').textContent = levelSystem.currentLevel;
+            
+            const accuracy = stats.questionsAnswered > 0 ? 
+                Math.round((stats.correctAnswers / stats.questionsAnswered) * 100) : 0;
+            document.getElementById('user-accuracy').textContent = `${accuracy}%`;
+            
+            // Update progress bar
+            document.getElementById('progress-fill').style.width = `${progress.percentage}%`;
+            document.getElementById('progress-text').textContent = `${progress.current}/${progress.required} EXP`;
+            
+            // Update info display
+            document.getElementById('current-level').textContent = levelSystem.currentLevel;
+            document.getElementById('current-exp').textContent = levelSystem.currentExp.toLocaleString();
+            document.getElementById('total-score').textContent = levelSystem.totalScore.toLocaleString();
+            document.getElementById('current-streak').textContent = levelSystem.streakCount;
+            document.getElementById('max-streak').textContent = levelSystem.maxStreak;
+            document.getElementById('achievement-count').textContent = levelSystem.achievements.length;
+            document.getElementById('current-title').textContent = title.title;
+            document.getElementById('exp-to-next').textContent = `${progress.required - progress.current} EXP`;
+        }
+        
+        function showAchievementGallery() {
+            const progress = levelSystem.getAchievementProgress();
+            const allAchievements = levelSystem.achievementDefinitions;
+            const earnedAchievements = levelSystem.achievements;
+            
+            let achievementCards = '';
+            
+            for (const achievementId in allAchievements) {
+                const achievement = allAchievements[achievementId];
+                const isEarned = earnedAchievements.includes(achievementId);
+                
+                achievementCards += `
+                    <div class="achievement-card ${isEarned ? 'earned' : 'locked'}">
+                        <div class="achievement-card-icon" style="background: ${achievement.color}">
+                            ${achievement.icon}
+                        </div>
+                        <h3>${achievement.name}</h3>
+                        <p>${achievement.description}</p>
+                    </div>
+                `;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'achievement-gallery-modal';
+            modal.innerHTML = `
+                <div class="achievement-gallery-content">
+                    <div class="achievement-gallery-header">
+                        <h2>성취 배지</h2>
+                        <div class="achievement-progress">
+                            ${progress.earned}/${progress.total} (${progress.percentage}%)
+                        </div>
+                        <button class="modal-close-btn" onclick="closeModal(this)">&times;</button>
+                    </div>
+                    <div class="achievement-grid">
+                        ${achievementCards}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            setTimeout(() => modal.classList.add('show'), 100);
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal.querySelector('.modal-close-btn'));
+                }
+            });
+        }
+        
+        function showUserProfileModal() {
+            const stats = levelSystem.getPlayerStats();
+            const title = levelSystem.getCurrentTitle();
+            const progress = levelSystem.getExpProgress();
+            const leaderboardData = levelSystem.getLeaderboardData();
+            
+            const modal = document.createElement('div');
+            modal.className = 'user-profile-modal';
+            modal.innerHTML = `
+                <div class="user-profile-content">
+                    <div class="user-profile-header">
+                        <h2>사용자 프로필</h2>
+                        <button class="modal-close-btn" onclick="closeModal(this)">&times;</button>
+                    </div>
+                    
+                    <div class="user-profile-main">
+                        <div class="user-avatar">
+                            <div class="avatar-icon" style="background: ${title.color}">
+                                ${title.icon}
+                            </div>
+                            <h3>${mockGameManager.currentUser.username}</h3>
+                            <p class="user-title-display" style="color: ${title.color}">${title.title}</p>
+                        </div>
+                        
+                        <div class="user-stats-detailed">
+                            <div class="stat-row">
+                                <span class="stat-label">레벨</span>
+                                <span class="stat-value">${levelSystem.currentLevel}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">총 점수</span>
+                                <span class="stat-value">${stats.totalScore.toLocaleString()}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">정답률</span>
+                                <span class="stat-value">${leaderboardData.accuracy}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">최대 연속 정답</span>
+                                <span class="stat-value">${stats.maxStreak}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">성취 배지</span>
+                                <span class="stat-value">${levelSystem.achievements.length}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="level-progress-detailed">
+                            <h4>다음 레벨까지</h4>
+                            <div class="progress-bar-detailed">
+                                <div class="progress-fill-detailed" style="width: ${progress.percentage}%"></div>
+                                <span class="progress-text-detailed">${progress.current}/${progress.required} EXP</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="user-profile-actions">
+                        <button class="profile-btn" onclick="showAchievements(); closeModal(this);">
+                            <i class="fas fa-trophy"></i> 성취 배지 보기
+                        </button>
+                        <button class="profile-btn secondary" onclick="resetProgress(); closeModal(this);">
+                            <i class="fas fa-redo"></i> 진행률 초기화
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            setTimeout(() => modal.classList.add('show'), 100);
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal.querySelector('.modal-close-btn'));
+                }
+            });
+        }
+        
+        function closeModal(btn) {
+            const modal = btn.closest('.achievement-gallery-modal, .user-profile-modal, .level-up-modal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(modal)) {
+                        document.body.removeChild(modal);
+                    }
+                }, 300);
+            }
+        }
+        
+        // Initialize display
+        updateDisplay();
+        
+        // Add some test achievements on load
+        setTimeout(() => {
+            console.log('Level System Test Environment Ready!');
+            console.log('Available test functions:');
+            console.log('- addScore(score, isCorrect)');
+            console.log('- showAchievements()');
+            console.log('- showUserProfile()');
+            console.log('- simulateGameSession()');
+            console.log('- resetProgress()');
+        }, 1000);
+    </script>
+</body>
+</html>

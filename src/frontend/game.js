@@ -20,6 +20,9 @@ class GameManager {
         // Initialize NPC system
         this.npcSystem = null;
         
+        // Initialize Level system
+        this.levelSystem = null;
+        
         this.init();
     }
     
@@ -37,6 +40,9 @@ class GameManager {
         
         // Initialize NPC system
         this.npcSystem = new NPCSystem(this);
+        
+        // Initialize Level system
+        this.levelSystem = new LevelSystem(this);
         
         // Simulate loading time
         setTimeout(() => {
@@ -591,6 +597,16 @@ class GameManager {
             this.correctAnswers++;
         }
         
+        // Add score to level system
+        if (this.levelSystem && result.totalScore > 0) {
+            const levelResult = this.levelSystem.addScore(result.totalScore, result);
+            
+            // Show level up notification if leveled up
+            if (levelResult.leveledUp) {
+                console.log(`Level up! New level: ${levelResult.newLevel}`);
+            }
+        }
+        
         this.updateGameStats();
     }
     
@@ -744,6 +760,202 @@ class GameManager {
     switchLeaderboardTab(type) {
         // Implementation for leaderboard tabs
         console.log('Switching to leaderboard tab:', type);
+    }
+    
+    // Achievement Gallery
+    showAchievementGallery() {
+        if (!this.levelSystem) {
+            this.showNotification('레벨 시스템이 초기화되지 않았습니다.', 'error');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'achievement-gallery-modal';
+        modal.innerHTML = this.generateAchievementGalleryHTML();
+        
+        document.body.appendChild(modal);
+        
+        // Show modal
+        setTimeout(() => modal.classList.add('show'), 100);
+        
+        // Close button event
+        modal.querySelector('.modal-close-btn').addEventListener('click', () => {
+            this.closeAchievementGallery(modal);
+        });
+        
+        // Click outside to close
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeAchievementGallery(modal);
+            }
+        });
+    }
+    
+    generateAchievementGalleryHTML() {
+        const progress = this.levelSystem.getAchievementProgress();
+        const allAchievements = this.levelSystem.achievementDefinitions;
+        const earnedAchievements = this.levelSystem.achievements;
+        
+        let achievementCards = '';
+        
+        for (const achievementId in allAchievements) {
+            const achievement = allAchievements[achievementId];
+            const isEarned = earnedAchievements.includes(achievementId);
+            
+            achievementCards += `
+                <div class="achievement-card ${isEarned ? 'earned' : 'locked'}">
+                    <div class="achievement-card-icon" style="background: ${achievement.color}">
+                        ${achievement.icon}
+                    </div>
+                    <h3>${achievement.name}</h3>
+                    <p>${achievement.description}</p>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="achievement-gallery-content">
+                <div class="achievement-gallery-header">
+                    <h2>성취 배지</h2>
+                    <div class="achievement-progress">
+                        ${progress.earned}/${progress.total} (${progress.percentage}%)
+                    </div>
+                    <button class="modal-close-btn">&times;</button>
+                </div>
+                <div class="achievement-grid">
+                    ${achievementCards}
+                </div>
+            </div>
+        `;
+    }
+    
+    closeAchievementGallery(modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            if (document.body.contains(modal)) {
+                document.body.removeChild(modal);
+            }
+        }, 300);
+    }
+    
+    // User Profile/Stats Display
+    showUserProfile() {
+        if (!this.levelSystem) {
+            this.showNotification('레벨 시스템이 초기화되지 않았습니다.', 'error');
+            return;
+        }
+        
+        const stats = this.levelSystem.getPlayerStats();
+        const title = this.levelSystem.getCurrentTitle();
+        const progress = this.levelSystem.getExpProgress();
+        const leaderboardData = this.levelSystem.getLeaderboardData();
+        
+        const modal = document.createElement('div');
+        modal.className = 'user-profile-modal';
+        modal.innerHTML = `
+            <div class="user-profile-content">
+                <div class="user-profile-header">
+                    <h2>사용자 프로필</h2>
+                    <button class="modal-close-btn">&times;</button>
+                </div>
+                
+                <div class="user-profile-main">
+                    <div class="user-avatar">
+                        <div class="avatar-icon" style="background: ${title.color}">
+                            ${title.icon}
+                        </div>
+                        <h3>${this.currentUser?.username || 'Anonymous'}</h3>
+                        <p class="user-title-display" style="color: ${title.color}">${title.title}</p>
+                    </div>
+                    
+                    <div class="user-stats-detailed">
+                        <div class="stat-row">
+                            <span class="stat-label">레벨</span>
+                            <span class="stat-value">${this.levelSystem.currentLevel}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">총 점수</span>
+                            <span class="stat-value">${stats.totalScore.toLocaleString()}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">정답률</span>
+                            <span class="stat-value">${leaderboardData.accuracy}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">최대 연속 정답</span>
+                            <span class="stat-value">${stats.maxStreak}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">성취 배지</span>
+                            <span class="stat-value">${stats.achievements || this.levelSystem.achievements.length}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="level-progress-detailed">
+                        <h4>다음 레벨까지</h4>
+                        <div class="progress-bar-detailed">
+                            <div class="progress-fill-detailed" style="width: ${progress.percentage}%"></div>
+                            <span class="progress-text-detailed">${progress.current}/${progress.required} EXP</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="user-profile-actions">
+                    <button class="profile-btn" onclick="gameManager.showAchievementGallery(); gameManager.closeUserProfile();">
+                        <i class="fas fa-trophy"></i> 성취 배지 보기
+                    </button>
+                    <button class="profile-btn secondary" onclick="gameManager.resetUserProgress();">
+                        <i class="fas fa-redo"></i> 진행률 초기화
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Show modal
+        setTimeout(() => modal.classList.add('show'), 100);
+        
+        // Close button event
+        modal.querySelector('.modal-close-btn').addEventListener('click', () => {
+            this.closeUserProfile(modal);
+        });
+        
+        // Click outside to close
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeUserProfile(modal);
+            }
+        });
+    }
+    
+    closeUserProfile(modal) {
+        if (!modal) {
+            modal = document.querySelector('.user-profile-modal');
+        }
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                }
+            }, 300);
+        }
+    }
+    
+    resetUserProgress() {
+        if (confirm('정말로 모든 진행률을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+            if (this.levelSystem) {
+                this.levelSystem.resetProgress();
+            }
+            
+            // Reset game manager stats
+            this.questionsAnswered = 0;
+            this.correctAnswers = 0;
+            
+            this.showNotification('진행률이 초기화되었습니다.', 'success');
+            this.closeUserProfile();
+        }
     }
 }
 
