@@ -5,52 +5,92 @@ AWS Problem Solver Game - Score Calculator Lambda Function
 
 import json
 import boto3
+import os
+import sys
 from datetime import datetime
 from typing import Dict, List, Optional
 from boto3.dynamodb.conditions import Key, Attr
 
+# 프로젝트 경로 추가
+sys.path.append('/opt/python')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# 로컬 모듈 import
+try:
+    from utils.difficulty_adapter import difficulty_adapter
+except ImportError:
+    difficulty_adapter = None
+
 # DynamoDB 클라이언트 초기화
 dynamodb = boto3.resource('dynamodb')
-users_table = dynamodb.Table('aws-game-users')
-sessions_table = dynamodb.Table('aws-game-sessions')
-questions_table = dynamodb.Table('aws-game-questions')
+users_table = dynamodb.Table(os.environ.get('USERS_TABLE', 'aws-game-users'))
+sessions_table = dynamodb.Table(os.environ.get('SESSIONS_TABLE', 'aws-game-sessions'))
+questions_table = dynamodb.Table(os.environ.get('QUESTIONS_TABLE', 'aws-game-questions'))
+leaderboard_table = dynamodb.Table(os.environ.get('LEADERBOARD_TABLE', 'aws-game-leaderboard'))
 
 def lambda_handler(event, context):
     """
     Lambda 함수 메인 핸들러
     """
     try:
-        # HTTP 메서드와 경로 확인
+        # CORS 헤더 설정
+        cors_headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        }
+        
+        # OPTIONS 요청 처리
+        if event.get('httpMethod') == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': cors_headers,
+                'body': json.dumps({'message': 'CORS preflight successful'})
+            }
+        
+        # HTTP 메서드 확인
         http_method = event.get('httpMethod', '')
+        path = event.get('path', '')
+        
+        print(f"Processing {http_method} request to {path}")
         
         if http_method == 'POST':
             body = json.loads(event.get('body', '{}'))
             action = body.get('action')
             
             if action == 'submit_answer':
-                return submit_answer(body)
+                return submit_answer(body, cors_headers)
             elif action == 'complete_session':
-                return complete_session(body)
+                return complete_session(body, cors_headers)
             elif action == 'calculate_level':
-                return calculate_user_level(body)
+                return calculate_user_level(body, cors_headers)
+            elif action == 'update_performance':
+                return update_user_performance(body, cors_headers)
+            elif action == 'get_adaptive_feedback':
+                return get_adaptive_feedback(body, cors_headers)
         
         elif http_method == 'GET':
-            if '/user/' in event.get('path', ''):
-                return get_user_stats(event)
+            if '/user/' in path:
+                return get_user_stats(event, cors_headers)
+            elif '/performance/' in path:
+                return get_performance_analysis(event, cors_headers)
         
         return {
             'statusCode': 404,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
+            'headers': cors_headers,
             'body': json.dumps({
-                'error': '요청한 엔드포인트를 찾을 수 없습니다.'
+                'error': '요청한 엔드포인트를 찾을 수 없습니다.',
+                'path': path,
+                'method': http_method
             }, ensure_ascii=False)
         }
         
     except Exception as e:
         print(f"Error in score_calculator: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
         return {
             'statusCode': 500,
             'headers': {
@@ -58,11 +98,314 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'error': '서버 내부 오류가 발생했습니다.'
+                'error': '서버 내부 오류가 발생했습니다.',
+                'details': str(e)
             }, ensure_ascii=False)
         }
 
-def submit_answer(data: Dict) -> Dict:
+def get_adaptive_feedback(data: Dict, cors_headers) -> Dict:
+    """
+    적응형 피드백 제공
+    """
+    try:
+        user_id = data.get('userId')
+        question_result = data.get('questionResult', {})
+        
+        if not user_id or not question_result:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'error': '필수 파라미터가 누락되었습니다.'
+                }, ensure_ascii=False)
+            }
+        
+        # 적응형 피드백 생성
+        if difficulty_adapter:
+            feedback = difficulty_adapter.provide_adaptive_feedback(user_id, question_result)
+        else:
+            # Fallback 피드백
+            feedback = generate_basic_feedback(question_result)
+        
+        return {
+            'statusCode': 200,
+            'headers': cors_headers,
+            'body': json.dumps({
+                'feedback': feedback,
+                'user_id': user_id,
+                'timestamp': datetime.utcnow().isoformat() + 'Z'
+            }, ensure_ascii=False)
+        }
+        
+    except Exception as e:
+        print(f"Error in get_adaptive_feedback: {str(e)}")
+        raise
+
+def update_user_performance(data: Dict, cors_headers) -> Dict:
+    """
+    사용자 성과 업데이트 및 분석
+    """
+    try:
+        user_id = data.get('userId')
+        recent_results = data.get('recentResults', [])
+        
+        if not user_id:
+            return {
+                'statusCode': 400,
+                'headers': cors_headers,
+                'body': json.dumps({
+                    'error': 'userId가 필요합니다.'
+                }, ensure_ascii=False)
+            }
+        
+        # 성과 분석
+        if difficulty_adapter:
+            analysis = difficulty_adapter.analyze_user_performance(user_id, recent_results)
+        else:
+            # Fallback 분석
+            analysis = generate_basic_analysis(recent_results)
+        
+        # 사용자 프로필 업데이트
+        update_user_profile_with_analysis(user_id, analysis)
+        
+        return {
+            'statusCode': 200,
+            'headers': cors_headers,
+            'body': json.dumps({
+                'analysis': analysis,
+                'user_id': user_id,
+                'updated_at': datetime.utcnow().isoformat() + 'Z'
+            }, ensure_ascii=False)
+        }
+        
+    except Exception as e:
+        print(f"Error in update_user_performance: {str(e)}")
+        raise
+
+def get_performance_analysis(event, cors_headers) -> Dict:
+    """
+    성과 분석 조회
+    """
+    try:
+        # 경로에서 userId 추출
+        path_parts = event['path'].split('/')
+        user_id = path_parts[-1]
+        
+        query_params = event.get('queryStringParameters') or {}
+        days = int(query_params.get('days', 7))
+        
+        # 최근 결과 조회
+        recent_results = get_user_recent_results(user_id, days)
+        
+        # 성과 분석
+        if difficulty_adapter:
+            analysis = difficulty_adapter.analyze_user_performance(user_id, recent_results)
+            
+            # 난이도 추천
+            difficulty_rec = difficulty_adapter.recommend_difficulty(user_id)
+        else:
+            analysis = generate_basic_analysis(recent_results)
+            difficulty_rec = {'recommended_difficulty': 'medium'}
+        
+        return {
+            'statusCode': 200,
+            'headers': cors_headers,
+            'body': json.dumps({
+                'user_id': user_id,
+                'analysis_period_days': days,
+                'performance_analysis': analysis,
+                'difficulty_recommendation': difficulty_rec,
+                'recent_results_count': len(recent_results)
+            }, ensure_ascii=False)
+        }
+        
+    except Exception as e:
+        print(f"Error in get_performance_analysis: {str(e)}")
+        raise
+
+def generate_basic_feedback(question_result: Dict) -> Dict:
+    """
+    기본 피드백 생성 (fallback)
+    """
+    is_correct = question_result.get('is_correct', False)
+    difficulty = question_result.get('difficulty', 'medium')
+    time_spent = question_result.get('time_spent', 0)
+    hints_used = question_result.get('hints_used', 0)
+    
+    if is_correct:
+        if hints_used == 0:
+            message = "완벽합니다! 힌트 없이 정답을 맞히셨네요!"
+        elif time_spent < 60:
+            message = "정답입니다! 빠른 시간 내에 해결하셨네요!"
+        else:
+            message = "정답입니다! 좋은 성과입니다!"
+    else:
+        if hints_used > 2:
+            message = "아쉽네요. 힌트를 참고해서 다시 도전해보세요."
+        else:
+            message = "틀렸지만 포기하지 마세요. 다시 한 번 시도해보세요!"
+    
+    return {
+        'feedback_type': 'correct' if is_correct else 'incorrect',
+        'main_message': message,
+        'motivational_message': "계속 학습하시면 더 좋은 결과를 얻을 수 있을 거예요!",
+        'next_steps': ["관련 AWS 문서 읽기", "유사한 문제 더 풀어보기"],
+        'learning_tips': ["기본 개념을 확실히 이해하기", "실습을 통해 경험 쌓기"]
+    }
+
+def generate_basic_analysis(recent_results: List[Dict]) -> Dict:
+    """
+    기본 분석 생성 (fallback)
+    """
+    if not recent_results:
+        return {
+            'basic_stats': {'accuracy': 0, 'total_questions': 0},
+            'skill_level': 'beginner',
+            'confidence_score': 0.5,
+            'improvement_areas': ['기본 개념 학습']
+        }
+    
+    total_questions = len(recent_results)
+    correct_answers = sum(1 for r in recent_results if r.get('is_correct', False))
+    accuracy = (correct_answers / total_questions) * 100 if total_questions > 0 else 0
+    
+    return {
+        'basic_stats': {
+            'total_questions': total_questions,
+            'correct_answers': correct_answers,
+            'accuracy': accuracy
+        },
+        'skill_level': 'intermediate' if accuracy >= 70 else 'beginner',
+        'confidence_score': min(1.0, accuracy / 100 + 0.2),
+        'improvement_areas': ['AWS 서비스 이해도 향상', '문제 해결 속도 개선']
+    }
+
+def get_user_recent_results(user_id: str, days: int) -> List[Dict]:
+    """
+    사용자의 최근 결과 조회
+    """
+    try:
+        # 최근 세션들 조회
+        from datetime import timedelta
+        cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
+        
+        response = sessions_table.query(
+            IndexName='userId-createdAt-index',
+            KeyConditionExpression=Key('userId').eq(user_id) & Key('createdAt').gte(cutoff_date),
+            ScanIndexForward=False,  # 최신순
+            Limit=50
+        )
+        
+        sessions = response.get('Items', [])
+        results = []
+        
+        for session in sessions:
+            questions = session.get('questions', [])
+            for q in questions:
+                if q.get('selectedAnswer'):
+                    results.append({
+                        'is_correct': q.get('isCorrect', False),
+                        'difficulty': q.get('difficulty', 'medium'),
+                        'category': q.get('category', 'UNKNOWN'),
+                        'time_spent': q.get('timeSpent', 0),
+                        'hints_used': q.get('hintsUsed', 0),
+                        'timestamp': q.get('endTime', session.get('createdAt', ''))
+                    })
+        
+        return results[-20:]  # 최근 20개 결과만
+        
+    except Exception as e:
+        print(f"Error getting user recent results: {str(e)}")
+        return []
+
+def update_user_profile_with_analysis(user_id: str, analysis: Dict):
+    """
+    분석 결과로 사용자 프로필 업데이트
+    """
+    try:
+        # 사용자 정보 조회
+        response = users_table.get_item(Key={'userId': user_id})
+        
+        if 'Item' not in response:
+            # 새 사용자 생성
+            create_new_user(user_id)
+        
+        # 분석 결과 반영하여 업데이트
+        basic_stats = analysis.get('basic_stats', {})
+        
+        users_table.update_item(
+            Key={'userId': user_id},
+            UpdateExpression="""
+                SET 
+                    stats.accuracy = :accuracy,
+                    stats.totalQuestions = :total_q,
+                    stats.correctAnswers = :correct_a,
+                    skillLevel = :skill_level,
+                    confidenceScore = :confidence,
+                    lastAnalysisAt = :now,
+                    performanceAnalysis = :analysis
+            """,
+            ExpressionAttributeValues={
+                ':accuracy': basic_stats.get('accuracy', 0),
+                ':total_q': basic_stats.get('total_questions', 0),
+                ':correct_a': basic_stats.get('correct_answers', 0),
+                ':skill_level': analysis.get('skill_level', 'beginner'),
+                ':confidence': analysis.get('confidence_score', 0.5),
+                ':now': datetime.utcnow().isoformat() + 'Z',
+                ':analysis': analysis
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error updating user profile: {str(e)}")
+
+def update_leaderboard_entry(user_id: str, user_data: Dict):
+    """
+    리더보드 엔트리 업데이트
+    """
+    try:
+        score = user_data.get('totalScore', 0)
+        username = user_data.get('username', f'Player_{user_id[-6:]}')
+        level = user_data.get('level', 1)
+        accuracy = user_data.get('stats', {}).get('accuracy', 0)
+        
+        # 기존 엔트리 삭제 후 새로 추가
+        leaderboard_types = ['daily', 'weekly', 'monthly', 'alltime']
+        
+        for lb_type in leaderboard_types:
+            # 기존 엔트리 찾기 및 삭제
+            try:
+                existing_response = leaderboard_table.query(
+                    IndexName='userId-index',
+                    KeyConditionExpression=Key('userId').eq(user_id),
+                    FilterExpression=Attr('leaderboardType').eq(lb_type)
+                )
+                
+                for item in existing_response.get('Items', []):
+                    leaderboard_table.delete_item(
+                        Key={
+                            'leaderboardType': lb_type,
+                            'score': item['score']
+                        }
+                    )
+            except Exception as e:
+                print(f"Error deleting existing leaderboard entry: {str(e)}")
+            
+            # 새 엔트리 추가
+            leaderboard_table.put_item(
+                Item={
+                    'leaderboardType': lb_type,
+                    'score': score,
+                    'userId': user_id,
+                    'username': username,
+                    'level': level,
+                    'accuracy': accuracy,
+                    'updatedAt': datetime.utcnow().isoformat() + 'Z'
+                }
+            )
+        
+    except Exception as e:
+        print(f"Error updating leaderboard: {str(e)}")
     """
     답안 제출 및 점수 계산
     """
