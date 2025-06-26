@@ -12,7 +12,7 @@ from unittest.mock import patch, MagicMock
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from utils.q_cli_integration import (
+from src.utils.q_cli_integration import (
     AmazonQCLIIntegration, 
     ask_q, 
     get_aws_help, 
