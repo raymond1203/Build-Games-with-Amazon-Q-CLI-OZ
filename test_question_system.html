@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question System Test</title>
+    <link rel="stylesheet" href="src/frontend/styles/game.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .test-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .test-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>AWS Problem Solver - Question System Test</h1>
+            <p>4지선다 문제 출제 및 답안 시스템 테스트</p>
+        </div>
+        
+        <div class="test-controls">
+            <button class="test-btn" onclick="loadTestQuestion()">새 문제 로드</button>
+            <button class="test-btn" onclick="showCorrectAnswer()">정답 보기</button>
+            <button class="test-btn" onclick="resetTest()">테스트 리셋</button>
+        </div>
+        
+        <!-- Question Area -->
+        <div class="question-area">
+            <div class="question-header">
+                <div class="question-meta">
+                    <span class="question-category" id="question-category">EC2</span>
+                    <span class="question-difficulty" id="question-difficulty">Medium</span>
+                    <span class="question-points" id="question-points">100 pts</span>
+                </div>
+                <div class="question-timer">
+                    <i class="fas fa-clock"></i>
+                    <span id="question-timer">60s</span>
+                </div>
+            </div>
+            
+            <div class="scenario-box">
+                <h4 id="scenario-title">시나리오 제목</h4>
+                <p id="scenario-description">시나리오 설명이 여기에 표시됩니다.</p>
+                <div class="scenario-context">
+                    <p id="scenario-context">추가 컨텍스트 정보</p>
+                </div>
+            </div>
+            
+            <div class="question-box">
+                <h3 id="question-text">문제가 여기에 표시됩니다.</h3>
+                
+                <div class="options-container" id="options-container">
+                    <!-- Options will be dynamically generated -->
+                </div>
+                
+                <div class="question-actions">
+                    <button id="hint-btn" class="hint-btn">
+                        <i class="fas fa-lightbulb"></i>
+                        힌트 (<span id="hint-count">3</span>)
+                    </button>
+                    <button id="submit-answer-btn" class="primary-btn" disabled>
+                        답안 제출
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Result Display -->
+        <div id="result-display" style="display: none; margin-top: 2rem;">
+            <div class="result-content">
+                <div class="result-header">
+                    <div id="result-icon" class="result-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 id="result-title">결과</h2>
+                    <p id="result-message">결과 메시지</p>
+                </div>
+                
+                <div class="result-details">
+                    <div class="score-breakdown">
+                        <h3>점수 상세</h3>
+                        <div class="score-item">
+                            <span>기본 점수:</span>
+                            <span id="base-score">100</span>
+                        </div>
+                        <div class="score-item">
+                            <span>난이도 보너스:</span>
+                            <span id="difficulty-bonus">+50</span>
+                        </div>
+                        <div class="score-item">
+                            <span>시간 보너스:</span>
+                            <span id="time-bonus">+20</span>
+                        </div>
+                        <div class="score-item penalty">
+                            <span>힌트 페널티:</span>
+                            <span id="hint-penalty">-10</span>
+                        </div>
+                        <div class="score-item total">
+                            <span>총 점수:</span>
+                            <span id="total-score">160</span>
+                        </div>
+                    </div>
+                    
+                    <div class="explanation-box">
+                        <h3>해설</h3>
+                        <p id="explanation-text">문제 해설이 여기에 표시됩니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock Question System for Testing
+        class TestQuestionSystem {
+            constructor() {
+                this.currentQuestion = null;
+                this.selectedAnswer = null;
+                this.hintsUsed = 0;
+                this.timeRemaining = 60;
+                this.questionTimer = null;
+                
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                document.getElementById('submit-answer-btn').addEventListener('click', () => {
+                    this.submitAnswer();
+                });
+                
+                document.getElementById('hint-btn').addEventListener('click', () => {
+                    this.useHint();
+                });
+            }
+            
+            generateMockQuestion() {
+                const questions = [
+                    {
+                        questionId: 'q001',
+                        category: 'EC2',
+                        difficulty: 'medium',
+                        points: 100,
+                        timeLimit: 60,
+                        scenario: {
+                            title: '웹 애플리케이션 확장성 문제',
+                            description: '스타트업 TechStart의 웹 애플리케이션이 갑작스러운 트래픽 증가로 인해 응답 시간이 느려지고 있습니다.',
+                            context: '현재 단일 EC2 인스턴스에서 실행 중이며, 피크 시간대에 CPU 사용률이 90%를 넘나들고 있습니다.'
+                        },
+                        question: '이 상황에서 가장 적절한 AWS 솔루션은 무엇입니까?',
+                        options: [
+                            {
+                                id: 'A',
+                                text: 'EC2 인스턴스의 크기를 더 큰 인스턴스 타입으로 업그레이드한다.'
+                            },
+                            {
+                                id: 'B',
+                                text: 'Application Load Balancer와 Auto Scaling Group을 구성하여 여러 인스턴스에 트래픽을 분산한다.'
+                            },
+                            {
+                                id: 'C',
+                                text: 'CloudFront CDN만 추가하여 정적 콘텐츠를 캐싱한다.'
+                            },
+                            {
+                                id: 'D',
+                                text: 'RDS 데이터베이스를 더 큰 인스턴스로 업그레이드한다.'
+                            }
+                        ],
+                        correctAnswer: 'B',
+                        explanation: 'Auto Scaling Group과 Load Balancer를 사용하면 트래픽 증가에 따라 자동으로 인스턴스를 추가/제거하여 비용 효율적으로 확장성을 확보할 수 있습니다.'
+                    },
+                    {
+                        questionId: 'q002',
+                        category: 'S3',
+                        difficulty: 'easy',
+                        points: 75,
+                        timeLimit: 45,
+                        scenario: {
+                            title: '데이터 백업 및 보관',
+                            description: '회사에서 중요한 문서들을 안전하게 백업하고 장기간 보관해야 합니다.',
+                            context: '매월 약 100GB의 데이터가 생성되며, 자주 접근하지 않지만 필요시 빠르게 복구할 수 있어야 합니다.'
+                        },
+                        question: '비용 효율적인 장기 보관을 위한 가장 적절한 S3 스토리지 클래스는?',
+                        options: [
+                            {
+                                id: 'A',
+                                text: 'S3 Standard - 일반적인 용도로 자주 액세스되는 데이터용'
+                            },
+                            {
+                                id: 'B',
+                                text: 'S3 Standard-IA (Infrequent Access) - 자주 액세스하지 않지만 빠른 액세스가 필요한 데이터용'
+                            },
+                            {
+                                id: 'C',
+                                text: 'S3 Glacier - 아카이브 및 장기 백업용'
+                            },
+                            {
+                                id: 'D',
+                                text: 'S3 One Zone-IA - 단일 가용 영역에 저장되는 저빈도 액세스 데이터용'
+                            }
+                        ],
+                        correctAnswer: 'B',
+                        explanation: 'S3 Standard-IA는 자주 액세스하지 않지만 필요시 즉시 사용할 수 있어야 하는 데이터에 적합합니다.'
+                    },
+                    {
+                        questionId: 'q003',
+                        category: 'Lambda',
+                        difficulty: 'hard',
+                        points: 150,
+                        timeLimit: 90,
+                        scenario: {
+                            title: '서버리스 데이터 처리',
+                            description: '매일 밤 대용량 로그 파일을 처리하는 배치 작업을 서버리스로 구현해야 합니다.',
+                            context: '파일 크기는 1GB~10GB이며, 처리 시간은 5분~30분 정도 소요됩니다. 비용 최적화가 중요합니다.'
+                        },
+                        question: '이 요구사항에 가장 적합한 AWS 서비스 조합은?',
+                        options: [
+                            {
+                                id: 'A',
+                                text: 'Lambda 함수만 사용하여 모든 처리를 수행한다.'
+                            },
+                            {
+                                id: 'B',
+                                text: 'Step Functions + Lambda + ECS Fargate를 조합하여 사용한다.'
+                            },
+                            {
+                                id: 'C',
+                                text: 'EventBridge + EC2 인스턴스를 사용한다.'
+                            },
+                            {
+                                id: 'D',
+                                text: 'S3 + Lambda + SQS만 사용한다.'
+                            }
+                        ],
+                        correctAnswer: 'B',
+                        explanation: 'Lambda는 15분 제한이 있어 장시간 처리에 부적합합니다. Step Functions로 워크플로우를 관리하고, 짧은 작업은 Lambda, 긴 작업은 ECS Fargate를 사용하는 것이 최적입니다.'
+                    }
+                ];
+                
+                return questions[Math.floor(Math.random() * questions.length)];
+            }
+            
+            displayQuestion(question) {
+                // Update question metadata
+                document.getElementById('question-category').textContent = question.category;
+                document.getElementById('question-difficulty').textContent = question.difficulty;
+                document.getElementById('question-difficulty').className = `question-difficulty ${question.difficulty}`;
+                document.getElementById('question-points').textContent = `${question.points} pts`;
+                
+                // Update scenario
+                document.getElementById('scenario-title').textContent = question.scenario.title;
+                document.getElementById('scenario-description').textContent = question.scenario.description;
+                document.getElementById('scenario-context').textContent = question.scenario.context;
+                
+                // Update question text
+                document.getElementById('question-text').textContent = question.question;
+                
+                // Generate options
+                this.generateOptions(question.options);
+                
+                // Reset UI state
+                this.resetQuestionUI();
+                
+                // Start timer
+                this.startTimer(question.timeLimit);
+            }
+            
+            generateOptions(options) {
+                const container = document.getElementById('options-container');
+                container.innerHTML = '';
+                
+                options.forEach(option => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'option-item';
+                    optionElement.dataset.optionId = option.id;
+                    
+                    optionElement.innerHTML = `
+                        <div class="option-letter">${option.id}</div>
+                        <div class="option-text">${option.text}</div>
+                        <div class="answer-feedback"></div>
+                    `;
+                    
+                    optionElement.addEventListener('click', () => this.selectOption(option.id));
+                    container.appendChild(optionElement);
+                });
+            }
+            
+            selectOption(optionId) {
+                // Remove previous selections
+                document.querySelectorAll('.option-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                
+                // Select current option
+                const selectedOption = document.querySelector(`[data-option-id="${optionId}"]`);
+                selectedOption.classList.add('selected');
+                
+                // Enable submit button
+                document.getElementById('submit-answer-btn').disabled = false;
+                
+                // Store selected answer
+                this.selectedAnswer = optionId;
+            }
+            
+            async submitAnswer() {
+                if (!this.selectedAnswer || !this.currentQuestion) {
+                    alert('답안을 선택해주세요.');
+                    return;
+                }
+                
+                // Stop timer
+                this.stopTimer();
+                
+                // Disable all options
+                document.querySelectorAll('.option-item').forEach(item => {
+                    item.classList.add('disabled');
+                });
+                
+                // Disable submit button
+                document.getElementById('submit-answer-btn').disabled = true;
+                
+                // Show correct/incorrect answers
+                await this.revealAnswers();
+                
+                // Calculate and show result
+                const result = this.calculateScore();
+                this.displayResult(result);
+            }
+            
+            async revealAnswers() {
+                const correctAnswer = this.currentQuestion.correctAnswer;
+                const selectedAnswer = this.selectedAnswer;
+                
+                // Reveal correct answer
+                const correctOption = document.querySelector(`[data-option-id="${correctAnswer}"]`);
+                correctOption.classList.add('correct', 'reveal-correct');
+                
+                // Reveal incorrect answer if different from correct
+                if (selectedAnswer !== correctAnswer) {
+                    const incorrectOption = document.querySelector(`[data-option-id="${selectedAnswer}"]`);
+                    incorrectOption.classList.add('incorrect', 'reveal-incorrect');
+                }
+                
+                // Wait for animation
+                await new Promise(resolve => setTimeout(resolve, 600));
+            }
+            
+            calculateScore() {
+                const isCorrect = this.selectedAnswer === this.currentQuestion.correctAnswer;
+                const baseScore = this.currentQuestion.points;
+                const timeBonus = Math.max(0, Math.floor((this.timeRemaining / this.currentQuestion.timeLimit) * 50));
+                const hintPenalty = this.hintsUsed * 10;
+                
+                let difficultyMultiplier = 1;
+                switch (this.currentQuestion.difficulty) {
+                    case 'easy': difficultyMultiplier = 1; break;
+                    case 'medium': difficultyMultiplier = 1.5; break;
+                    case 'hard': difficultyMultiplier = 2; break;
+                }
+                
+                const totalScore = isCorrect ? 
+                    Math.floor((baseScore * difficultyMultiplier) + timeBonus - hintPenalty) : 0;
+                
+                return {
+                    isCorrect,
+                    selectedAnswer: this.selectedAnswer,
+                    correctAnswer: this.currentQuestion.correctAnswer,
+                    baseScore,
+                    difficultyMultiplier,
+                    timeBonus,
+                    hintPenalty,
+                    totalScore,
+                    explanation: this.currentQuestion.explanation
+                };
+            }
+            
+            displayResult(result) {
+                const resultDisplay = document.getElementById('result-display');
+                resultDisplay.style.display = 'block';
+                
+                // Update result header
+                const resultIcon = document.getElementById('result-icon');
+                const resultTitle = document.getElementById('result-title');
+                const resultMessage = document.getElementById('result-message');
+                
+                if (result.isCorrect) {
+                    resultIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                    resultIcon.className = 'result-icon correct';
+                    resultTitle.textContent = '정답입니다!';
+                    resultMessage.textContent = '훌륭한 선택이었습니다!';
+                } else {
+                    resultIcon.innerHTML = '<i class="fas fa-times-circle"></i>';
+                    resultIcon.className = 'result-icon incorrect';
+                    resultTitle.textContent = '틀렸습니다';
+                    resultMessage.textContent = `정답은 ${result.correctAnswer}번이었습니다.`;
+                }
+                
+                // Update score breakdown
+                document.getElementById('base-score').textContent = result.baseScore;
+                document.getElementById('difficulty-bonus').textContent = `+${Math.floor(result.baseScore * (result.difficultyMultiplier - 1))}`;
+                document.getElementById('time-bonus').textContent = `+${result.timeBonus}`;
+                document.getElementById('hint-penalty').textContent = `-${result.hintPenalty}`;
+                document.getElementById('total-score').textContent = result.totalScore;
+                
+                // Update explanation
+                document.getElementById('explanation-text').textContent = result.explanation;
+            }
+            
+            resetQuestionUI() {
+                this.selectedAnswer = null;
+                this.hintsUsed = 0;
+                document.getElementById('hint-count').textContent = '3';
+                document.getElementById('submit-answer-btn').disabled = true;
+                document.getElementById('result-display').style.display = 'none';
+                
+                // Reset option states
+                document.querySelectorAll('.option-item').forEach(item => {
+                    item.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'reveal-correct', 'reveal-incorrect');
+                });
+            }
+            
+            startTimer(timeLimit) {
+                this.timeRemaining = timeLimit;
+                this.updateTimerDisplay();
+                
+                this.questionTimer = setInterval(() => {
+                    this.timeRemaining--;
+                    this.updateTimerDisplay();
+                    
+                    if (this.timeRemaining <= 10) {
+                        document.querySelector('.question-timer').classList.add('warning');
+                    }
+                    
+                    if (this.timeRemaining <= 0) {
+                        this.timeUp();
+                    }
+                }, 1000);
+            }
+            
+            stopTimer() {
+                if (this.questionTimer) {
+                    clearInterval(this.questionTimer);
+                    this.questionTimer = null;
+                }
+            }
+            
+            updateTimerDisplay() {
+                document.getElementById('question-timer').textContent = `${this.timeRemaining}s`;
+            }
+            
+            timeUp() {
+                this.stopTimer();
+                alert('시간이 초과되었습니다!');
+                
+                if (!this.selectedAnswer) {
+                    this.selectedAnswer = 'A'; // Default to first option
+                }
+                
+                this.submitAnswer();
+            }
+            
+            useHint() {
+                if (this.hintsUsed >= 3) {
+                    alert('더 이상 힌트를 사용할 수 없습니다.');
+                    return;
+                }
+                
+                this.hintsUsed++;
+                document.getElementById('hint-count').textContent = 3 - this.hintsUsed;
+                
+                const hints = [
+                    "AWS의 관리형 서비스를 고려해보세요.",
+                    "비용 효율성과 확장성을 동시에 고려해야 합니다.",
+                    "고가용성을 위한 다중 AZ 구성을 생각해보세요."
+                ];
+                
+                const hint = hints[Math.min(this.hintsUsed - 1, hints.length - 1)];
+                alert(`힌트 ${this.hintsUsed}: ${hint}`);
+                
+                if (this.hintsUsed >= 3) {
+                    document.getElementById('hint-btn').disabled = true;
+                    document.getElementById('hint-btn').textContent = '힌트 없음';
+                }
+            }
+        }
+        
+        // Initialize test system
+        const testSystem = new TestQuestionSystem();
+        
+        // Test functions
+        function loadTestQuestion() {
+            testSystem.currentQuestion = testSystem.generateMockQuestion();
+            testSystem.displayQuestion(testSystem.currentQuestion);
+        }
+        
+        function showCorrectAnswer() {
+            if (testSystem.currentQuestion) {
+                alert(`정답: ${testSystem.currentQuestion.correctAnswer}번\n\n해설: ${testSystem.currentQuestion.explanation}`);
+            } else {
+                alert('먼저 문제를 로드해주세요.');
+            }
+        }
+        
+        function resetTest() {
+            testSystem.stopTimer();
+            testSystem.resetQuestionUI();
+            document.querySelector('.question-timer').classList.remove('warning');
+            testSystem.currentQuestion = null;
+        }
+        
+        // Load initial question
+        loadTestQuestion();
+    </script>
+</body>
+</html>
