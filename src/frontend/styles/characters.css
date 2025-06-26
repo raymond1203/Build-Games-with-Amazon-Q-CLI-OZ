@@ -1,0 +1,357 @@
+/* AWS Problem Solver Game - Character Styles */
+
+/* NPC Selection Screen */
+.npc-selection-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.npc-selection-content h2 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 3rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.npc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.npc-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.npc-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.npc-card.selected {
+    border: 3px solid #FF9900;
+    transform: translateY(-10px);
+}
+
+/* NPC Avatars */
+.npc-avatar, .npc-avatar-large, .npc-avatar-small {
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0 auto 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.npc-avatar {
+    width: 80px;
+    height: 80px;
+}
+
+.npc-avatar-large {
+    width: 120px;
+    height: 120px;
+}
+
+.npc-avatar-small {
+    width: 60px;
+    height: 60px;
+}
+
+/* Character-specific avatars */
+.npc-avatar.alex, .npc-avatar-large.alex, .npc-avatar-small.alex {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    border: 4px solid #2E7D32;
+}
+
+.npc-avatar.alex::before, .npc-avatar-large.alex::before, .npc-avatar-small.alex::before {
+    content: "👨‍💼";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+.npc-avatar.sarah, .npc-avatar-large.sarah, .npc-avatar-small.sarah {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    border: 4px solid #0D47A1;
+}
+
+.npc-avatar.sarah::before, .npc-avatar-large.sarah::before, .npc-avatar-small.sarah::before {
+    content: "👩‍💻";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+.npc-avatar.mike, .npc-avatar-large.mike, .npc-avatar-small.mike {
+    background: linear-gradient(135deg, #FF5722, #D84315);
+    border: 4px solid #BF360C;
+}
+
+.npc-avatar.mike::before, .npc-avatar-large.mike::before, .npc-avatar-small.mike::before {
+    content: "👨‍🔒";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+.npc-avatar.jenny, .npc-avatar-large.jenny, .npc-avatar-small.jenny {
+    background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+    border: 4px solid #4A148C;
+}
+
+.npc-avatar.jenny::before, .npc-avatar-large.jenny::before, .npc-avatar-small.jenny::before {
+    content: "👩‍🚀";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+/* Large avatars for game screen */
+.npc-avatar-large.alex::before {
+    font-size: 3rem;
+}
+
+.npc-avatar-large.sarah::before {
+    font-size: 3rem;
+}
+
+.npc-avatar-large.mike::before {
+    font-size: 3rem;
+}
+
+.npc-avatar-large.jenny::before {
+    font-size: 3rem;
+}
+
+/* Small avatars for hints */
+.npc-avatar-small.alex::before,
+.npc-avatar-small.sarah::before,
+.npc-avatar-small.mike::before,
+.npc-avatar-small.jenny::before {
+    font-size: 1.5rem;
+}
+
+/* NPC Info */
+.npc-info h3 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #232F3E;
+    margin-bottom: 0.5rem;
+}
+
+.npc-title {
+    font-size: 1rem;
+    color: #FF9900;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+.npc-description {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.npc-expertise {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.expertise-tag {
+    background: linear-gradient(135deg, #FF9900, #FF6600);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* NPC Dialogue Area */
+.npc-dialogue-area {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.npc-character {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.npc-status h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #232F3E;
+    margin-bottom: 0.3rem;
+}
+
+.npc-status p {
+    color: #FF9900;
+    font-weight: 500;
+}
+
+.dialogue-box {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border-left: 4px solid #FF9900;
+}
+
+.dialogue-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 1rem;
+    min-height: 60px;
+}
+
+.dialogue-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.dialogue-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dialogue-btn:not(.secondary) {
+    background: #FF9900;
+    color: white;
+}
+
+.dialogue-btn.secondary {
+    background: #e9ecef;
+    color: #666;
+}
+
+.dialogue-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Hint Modal NPC Avatar */
+.hint-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.npc-hint-avatar {
+    flex-shrink: 0;
+}
+
+.hint-text {
+    flex: 1;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #333;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 10px;
+    border-left: 4px solid #FF9900;
+}
+
+/* Character-specific dialogue styling */
+.dialogue-box.alex {
+    border-left-color: #4CAF50;
+}
+
+.dialogue-box.sarah {
+    border-left-color: #2196F3;
+}
+
+.dialogue-box.mike {
+    border-left-color: #FF5722;
+}
+
+.dialogue-box.jenny {
+    border-left-color: #9C27B0;
+}
+
+/* Personality indicators */
+.personality-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+
+.personality-indicator.energetic {
+    background: rgba(76, 175, 80, 0.2);
+    color: #2E7D32;
+}
+
+.personality-indicator.analytical {
+    background: rgba(33, 150, 243, 0.2);
+    color: #0D47A1;
+}
+
+.personality-indicator.cautious {
+    background: rgba(255, 87, 34, 0.2);
+    color: #BF360C;
+}
+
+.personality-indicator.curious {
+    background: rgba(156, 39, 176, 0.2);
+    color: #4A148C;
+}
+
+/* Responsive Design for Characters */
+@media (max-width: 768px) {
+    .npc-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .npc-character {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .dialogue-actions {
+        flex-direction: column;
+    }
+    
+    .hint-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .npc-selection-content h2 {
+        font-size: 2rem;
+    }
+}
