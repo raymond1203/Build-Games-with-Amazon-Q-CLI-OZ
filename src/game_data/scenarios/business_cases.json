@@ -1,0 +1,223 @@
+{
+  "scenarios": {
+    "startup_scaling": {
+      "id": "startup_scaling",
+      "title": "스타트업 급성장 대응",
+      "npc": "alex_ceo",
+      "difficulty": "medium",
+      "duration": "15-20분",
+      "description": "TechStart Inc.의 서비스가 갑작스럽게 인기를 끌면서 발생하는 다양한 기술적 도전과제들을 해결해야 합니다.",
+      "background_story": "Alex의 스타트업이 유명 인플루언서의 소개로 하루 만에 사용자가 100배 증가했습니다. 서버는 다운되고, 비용은 급증하고, 투자자 미팅은 내일로 다가오고 있습니다.",
+      "phases": [
+        {
+          "phase": 1,
+          "title": "긴급 서버 다운 해결",
+          "problem": "트래픽 급증으로 인한 서버 다운",
+          "context": "단일 EC2 인스턴스가 과부하로 다운됨",
+          "learning_objectives": ["Auto Scaling", "Load Balancer", "High Availability"],
+          "questions": ["ec2_001"]
+        },
+        {
+          "phase": 2,
+          "title": "비용 최적화",
+          "problem": "급증한 인프라 비용 절감",
+          "context": "On-Demand 인스턴스로 인한 높은 비용",
+          "learning_objectives": ["Reserved Instances", "Spot Instances", "Cost Management"],
+          "questions": ["ec2_004"]
+        },
+        {
+          "phase": 3,
+          "title": "글로벌 서비스 준비",
+          "problem": "해외 사용자들의 느린 접속 속도",
+          "context": "아시아, 유럽 사용자들의 성능 불만",
+          "learning_objectives": ["CloudFront", "Global Infrastructure", "CDN"],
+          "questions": ["s3_005"]
+        }
+      ],
+      "success_criteria": {
+        "technical": "안정적인 서비스 운영 달성",
+        "business": "비용 효율적인 글로벌 서비스 구축",
+        "learning": "AWS 확장성 서비스 이해"
+      },
+      "rewards": {
+        "points": 350,
+        "achievements": ["startup_hero", "cost_optimizer", "global_architect"],
+        "unlocks": ["advanced_scaling_scenarios"]
+      }
+    },
+    "data_pipeline_optimization": {
+      "id": "data_pipeline_optimization",
+      "title": "데이터 파이프라인 최적화",
+      "npc": "sarah_analyst",
+      "difficulty": "hard",
+      "duration": "25-30분",
+      "description": "DataCorp의 데이터 분석 파이프라인을 현대적이고 효율적인 시스템으로 전환하는 프로젝트입니다.",
+      "background_story": "Sarah의 회사에서 매일 처리하는 데이터량이 10TB를 넘어서면서 기존 시스템으로는 한계에 도달했습니다. 실시간 분석 요구사항도 증가하고 있어 전면적인 시스템 개편이 필요합니다.",
+      "phases": [
+        {
+          "phase": 1,
+          "title": "대용량 데이터 저장 최적화",
+          "problem": "증가하는 데이터 저장 비용과 접근 속도",
+          "context": "다양한 형태의 데이터를 효율적으로 저장해야 함",
+          "learning_objectives": ["S3 Storage Classes", "Data Lifecycle", "Cost Optimization"],
+          "questions": ["s3_002", "s3_004"]
+        },
+        {
+          "phase": 2,
+          "title": "실시간 데이터 처리",
+          "problem": "배치 처리에서 실시간 처리로 전환",
+          "context": "이벤트 기반 데이터 처리 파이프라인 구축",
+          "learning_objectives": ["Lambda", "Event-driven Architecture", "Stream Processing"],
+          "questions": ["lambda_002", "lambda_003"]
+        },
+        {
+          "phase": 3,
+          "title": "자동화된 분석 워크플로우",
+          "problem": "복잡한 분석 작업의 자동화",
+          "context": "여러 단계의 데이터 변환과 분석 작업 연결",
+          "learning_objectives": ["Step Functions", "Workflow Automation", "Error Handling"],
+          "questions": ["lambda_003"]
+        }
+      ],
+      "success_criteria": {
+        "technical": "완전 자동화된 데이터 파이프라인 구축",
+        "business": "분석 결과 제공 시간 90% 단축",
+        "learning": "서버리스 데이터 아키텍처 마스터"
+      },
+      "rewards": {
+        "points": 450,
+        "achievements": ["data_architect", "automation_master", "pipeline_expert"],
+        "unlocks": ["ml_pipeline_scenarios"]
+      }
+    },
+    "security_hardening": {
+      "id": "security_hardening",
+      "title": "보안 강화 프로젝트",
+      "npc": "mike_security",
+      "difficulty": "hard",
+      "duration": "20-25분",
+      "description": "SecureBank의 클라우드 인프라를 금융권 보안 기준에 맞게 강화하는 종합적인 보안 프로젝트입니다.",
+      "background_story": "금융감독원의 보안 감사에서 여러 취약점이 발견되었습니다. Mike는 3개월 내에 모든 보안 이슈를 해결하고 제로 트러스트 보안 모델을 구현해야 합니다.",
+      "phases": [
+        {
+          "phase": 1,
+          "title": "네트워크 보안 강화",
+          "problem": "네트워크 레벨 보안 취약점 해결",
+          "context": "VPC 설계 및 접근 제어 강화",
+          "learning_objectives": ["VPC Security", "Network Segmentation", "Access Control"],
+          "questions": ["vpc_001", "vpc_002"]
+        },
+        {
+          "phase": 2,
+          "title": "데이터 보안 및 암호화",
+          "problem": "민감한 데이터의 암호화 및 접근 제어",
+          "context": "고객 개인정보 및 금융 데이터 보호",
+          "learning_objectives": ["Encryption", "Key Management", "Data Protection"],
+          "questions": ["s3_003", "rds_004"]
+        },
+        {
+          "phase": 3,
+          "title": "보안 모니터링 및 자동 대응",
+          "problem": "실시간 보안 위협 탐지 및 대응",
+          "context": "보안 이벤트 자동 탐지 및 대응 시스템",
+          "learning_objectives": ["Security Monitoring", "Automated Response", "Incident Management"],
+          "questions": ["lambda_004"]
+        }
+      ],
+      "success_criteria": {
+        "technical": "제로 트러스트 보안 아키텍처 구현",
+        "business": "금융권 보안 규제 완전 준수",
+        "learning": "AWS 보안 서비스 전문가 수준 달성"
+      },
+      "rewards": {
+        "points": 500,
+        "achievements": ["security_expert", "compliance_master", "zero_trust_architect"],
+        "unlocks": ["advanced_security_scenarios"]
+      }
+    },
+    "serverless_journey": {
+      "id": "serverless_journey",
+      "title": "서버리스 여정",
+      "npc": "jenny_developer",
+      "difficulty": "easy_to_medium",
+      "duration": "20-25분",
+      "description": "Jenny와 함께 전통적인 서버 기반 애플리케이션을 완전한 서버리스 아키텍처로 전환하는 여정입니다.",
+      "background_story": "Jenny는 회사의 레거시 시스템을 현대적인 서버리스 아키텍처로 전환하는 프로젝트를 맡게 되었습니다. 서버 관리 부담을 없애고 자동 확장되는 시스템을 구축하고 싶어합니다.",
+      "phases": [
+        {
+          "phase": 1,
+          "title": "서버리스 API 구축",
+          "problem": "기존 REST API를 서버리스로 전환",
+          "context": "Express.js 기반 API를 Lambda로 마이그레이션",
+          "learning_objectives": ["Lambda", "API Gateway", "Serverless Architecture"],
+          "questions": ["lambda_001"]
+        },
+        {
+          "phase": 2,
+          "title": "정적 자산 최적화",
+          "problem": "프론트엔드 자산의 효율적인 배포",
+          "context": "React 앱의 정적 호스팅 및 CDN 적용",
+          "learning_objectives": ["S3 Static Hosting", "CloudFront", "Web Performance"],
+          "questions": ["s3_001"]
+        },
+        {
+          "phase": 3,
+          "title": "이벤트 기반 처리",
+          "problem": "파일 업로드 시 자동 처리 구현",
+          "context": "이미지 업로드 시 자동 리사이징 및 썸네일 생성",
+          "learning_objectives": ["Event-driven Architecture", "S3 Events", "Image Processing"],
+          "questions": ["lambda_002"]
+        },
+        {
+          "phase": 4,
+          "title": "데이터베이스 현대화",
+          "problem": "관계형 DB에서 NoSQL로 전환",
+          "context": "사용자 데이터를 DynamoDB로 마이그레이션",
+          "learning_objectives": ["NoSQL Design", "DynamoDB", "Data Migration"],
+          "questions": ["rds_001"]
+        }
+      ],
+      "success_criteria": {
+        "technical": "완전한 서버리스 애플리케이션 구축",
+        "business": "운영 비용 70% 절감 및 자동 확장 달성",
+        "learning": "서버리스 아키텍처 패턴 마스터"
+      },
+      "rewards": {
+        "points": 400,
+        "achievements": ["serverless_pioneer", "modern_architect", "cost_saver"],
+        "unlocks": ["microservices_scenarios"]
+      }
+    }
+  },
+  "scenario_progression": {
+    "beginner_path": [
+      "serverless_journey"
+    ],
+    "intermediate_path": [
+      "startup_scaling",
+      "data_pipeline_optimization"
+    ],
+    "advanced_path": [
+      "security_hardening"
+    ],
+    "mixed_path": [
+      "serverless_journey",
+      "startup_scaling",
+      "data_pipeline_optimization",
+      "security_hardening"
+    ]
+  },
+  "adaptive_scenarios": {
+    "user_performance_based": {
+      "high_performer": "더 복잡한 시나리오와 고급 주제 제공",
+      "average_performer": "균형잡힌 난이도와 충분한 힌트 제공",
+      "struggling_performer": "기본 개념 강화와 단계별 가이드 제공"
+    },
+    "interest_based": {
+      "cost_optimization": "비용 절감 중심의 시나리오 우선 제공",
+      "security_focus": "보안 강화 시나리오 우선 제공",
+      "performance_focus": "성능 최적화 시나리오 우선 제공",
+      "innovation_focus": "최신 기술 활용 시나리오 우선 제공"
+    }
+  }
+}
