@@ -1,0 +1,27 @@
+{
+  "name": "aws-problem-solver-game",
+  "version": "1.0.0",
+  "description": "An interactive game where players solve AWS problems as cloud architects",
+  "main": "src/frontend/index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "test": "python -m pytest tests/",
+    "deploy": "aws cloudformation deploy --template-file infrastructure/cloudformation/main.yaml --stack-name aws-problem-solver-game"
+  },
+  "keywords": [
+    "aws",
+    "game",
+    "education",
+    "cloud",
+    "quiz",
+    "amazon-q"
+  ],
+  "author": "AWS Problem Solver Game Team",
+  "license": "MIT",
+  "dependencies": {
+    "phaser": "^3.70.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
+}
