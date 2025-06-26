@@ -1,0 +1,142 @@
+{
+  "questions": [
+    {
+      "questionId": "vpc_001",
+      "category": "VPC",
+      "difficulty": "easy",
+      "npcCharacter": "mike_security",
+      "scenario": {
+        "title": "네트워크 격리 요구사항",
+        "description": "보안 담당자 Mike가 회사의 AWS 리소스를 인터넷과 격리된 프라이빗 네트워크에 배치하고 싶어합니다.",
+        "context": "현재 기본 VPC를 사용하고 있는데, 보안 정책상 모든 리소스가 프라이빗 네트워크에 있어야 하고 필요한 경우에만 인터넷에 접근할 수 있어야 합니다."
+      },
+      "question": "이 요구사항을 만족하는 가장 기본적인 VPC 구성은?",
+      "options": [
+        {
+          "id": "A",
+          "text": "퍼블릭 서브넷만 생성",
+          "isCorrect": false
+        },
+        {
+          "id": "B",
+          "text": "프라이빗 서브넷 + NAT Gateway",
+          "isCorrect": true
+        },
+        {
+          "id": "C",
+          "text": "기본 VPC 그대로 사용",
+          "isCorrect": false
+        },
+        {
+          "id": "D",
+          "text": "인터넷 게이트웨이 제거",
+          "isCorrect": false
+        }
+      ],
+      "explanation": "프라이빗 서브넷에 리소스를 배치하고 NAT Gateway를 통해 아웃바운드 인터넷 접근을 허용하면, 인바운드 접근은 차단하면서도 필요한 인터넷 접근은 가능합니다.",
+      "hints": [
+        "리소스를 인터넷에서 직접 접근할 수 없게 하려면 특별한 서브넷이 필요합니다.",
+        "아웃바운드 인터넷 접근을 위한 AWS 서비스가 있습니다.",
+        "NAT는 Network Address Translation의 줄임말입니다."
+      ],
+      "tags": ["private-subnet", "nat-gateway", "network-isolation"],
+      "estimatedTime": 60,
+      "points": 90,
+      "createdAt": "2025-06-26T10:00:00Z",
+      "updatedAt": "2025-06-26T10:00:00Z",
+      "isActive": true
+    },
+    {
+      "questionId": "vpc_002",
+      "category": "VPC",
+      "difficulty": "medium",
+      "npcCharacter": "alex_ceo",
+      "scenario": {
+        "title": "멀티 티어 아키텍처",
+        "description": "Alex의 회사에서 웹 애플리케이션을 3계층 아키텍처로 구성하려고 합니다.",
+        "context": "웹 서버, 애플리케이션 서버, 데이터베이스 서버를 각각 다른 보안 레벨로 분리하고 싶습니다. 웹 서버만 인터넷에서 접근 가능하고, 각 계층 간의 통신은 제한적으로 허용해야 합니다."
+      },
+      "question": "3계층 아키텍처에 적합한 VPC 서브넷 구성은?",
+      "options": [
+        {
+          "id": "A",
+          "text": "모든 서버를 하나의 퍼블릭 서브넷에 배치",
+          "isCorrect": false
+        },
+        {
+          "id": "B",
+          "text": "퍼블릭 서브넷(웹) + 프라이빗 서브넷(앱) + DB 서브넷(DB)",
+          "isCorrect": true
+        },
+        {
+          "id": "C",
+          "text": "모든 서버를 프라이빗 서브넷에 배치",
+          "isCorrect": false
+        },
+        {
+          "id": "D",
+          "text": "웹과 앱 서버만 퍼블릭 서브넷에 배치",
+          "isCorrect": false
+        }
+      ],
+      "explanation": "3계층 아키텍처에서는 웹 서버는 퍼블릭 서브넷, 애플리케이션 서버는 프라이빗 서브넷, 데이터베이스는 DB 서브넷에 배치하여 각 계층별로 적절한 보안 레벨을 유지할 수 있습니다.",
+      "hints": [
+        "각 계층마다 다른 보안 요구사항이 있습니다.",
+        "데이터베이스는 가장 높은 보안이 필요합니다.",
+        "AWS에는 데이터베이스 전용 서브넷 그룹이 있습니다."
+      ],
+      "tags": ["multi-tier", "subnet-design", "security-layers"],
+      "estimatedTime": 90,
+      "points": 120,
+      "createdAt": "2025-06-26T10:00:00Z",
+      "updatedAt": "2025-06-26T10:00:00Z",
+      "isActive": true
+    },
+    {
+      "questionId": "vpc_003",
+      "category": "VPC",
+      "difficulty": "hard",
+      "npcCharacter": "sarah_analyst",
+      "scenario": {
+        "title": "하이브리드 클라우드 연결",
+        "description": "데이터 분석가 Sarah의 회사에서 온프레미스 데이터센터와 AWS VPC를 안전하게 연결해야 합니다.",
+        "context": "민감한 데이터가 온프레미스에 있고, AWS에서 이 데이터를 분석해야 합니다. 인터넷을 통한 연결은 보안상 허용되지 않으며, 안정적이고 높은 대역폭의 연결이 필요합니다."
+      },
+      "question": "온프레미스와 AWS 간 최적의 연결 방법은?",
+      "options": [
+        {
+          "id": "A",
+          "text": "VPN 연결만 사용",
+          "isCorrect": false
+        },
+        {
+          "id": "B",
+          "text": "AWS Direct Connect + VPN 백업",
+          "isCorrect": true
+        },
+        {
+          "id": "C",
+          "text": "인터넷을 통한 암호화 연결",
+          "isCorrect": false
+        },
+        {
+          "id": "D",
+          "text": "AWS Storage Gateway만 사용",
+          "isCorrect": false
+        }
+      ],
+      "explanation": "Direct Connect는 전용 네트워크 연결로 높은 대역폭과 안정성을 제공하며, VPN을 백업으로 구성하면 이중화된 안전한 하이브리드 연결을 구축할 수 있습니다.",
+      "hints": [
+        "전용 네트워크 연결을 제공하는 AWS 서비스가 있습니다.",
+        "높은 대역폭과 안정성이 필요한 경우의 솔루션을 고려해보세요.",
+        "백업 연결도 함께 구성하는 것이 좋습니다."
+      ],
+      "tags": ["direct-connect", "hybrid-cloud", "vpn-backup"],
+      "estimatedTime": 120,
+      "points": 150,
+      "createdAt": "2025-06-26T10:00:00Z",
+      "updatedAt": "2025-06-26T10:00:00Z",
+      "isActive": true
+    }
+  ]
+}
